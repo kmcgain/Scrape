@@ -1,6 +1,13 @@
 var cheerio = require('cheerio');
 var request = require('request');
 var url = require('url');
+var mongoose = require('mongoose');
+
+mongoose.connect('mongodb://localhost/test');
+mongoose.connection.once('open', function callback() {
+	// cool.
+	appStart();
+});
 
 function getUrl(relHref) {
 	return url.resolve('http://www.tripadvisor.com.au', relHref);
@@ -9,6 +16,9 @@ function getUrl(relHref) {
 var Progress = function(href) {
 	this.Url = href;
 	this.Children = [];
+	this.IsHotel = false;
+	this.DbId = null; // Not all progress objects are persisted.
+	this.IsRoot = false;
 };
 
 var loadPlace = function(href, progressObj) {
@@ -36,8 +46,13 @@ var loadPlace = function(href, progressObj) {
 		}
 
 		if (href.match(/\/Hotels-/)) {
-			console.log('Found hotels page');
+			//console.log('Found hotels page');
+			progressObj.IsHotel = true;
+
 			progressObj.Completed = true;
+			return;	
+			
+			
 			/*$('#ACCOM_OVERVIEW .listing .property_title')
 				.each(function(i, hotelTitle) {
 					console.log('Hotel ' + hotelTitle.text());
@@ -57,44 +72,108 @@ var loadPlace = function(href, progressObj) {
 	});
 };
 
-console.log("Loading places");
 
-//var allLocationsUrl = getUrl('/AllLocations-g1-Places-World.html');
-var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
-//var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
-var downloadTracker = new Progress(allLocationsUrl);
-loadPlace(allLocationsUrl, downloadTracker);
 
-console.log("Starting progress tracking");
-function reportProgress(progress) {
-	var prog = unwrapProgress(progress);
-	console.log("Total progress: " + prog);
+function appStart() {
+	var progressSchema = new Schema({
+		Id: { type: Schema.Types.ObjectId, index: true },
+		Progress: Schema.Types.Mixed, 
+		IsRoot: { type: [Boolean], index: true },
+	});
 
-	if (prog == 1.0) {
-		return;
+	var ProgressMongo = mongoose.model('Scrape', progressSchema); 
+
+	function createDocument(progress) {
+		var doc = new ProgressMongo();
+		doc.Id = new mongoose.Types.ObjectId;
+		doc.Progress = progress;
+		doc.save();
+		return doc.Id;
 	}
+
+	console.log("Loading places");
+
+	ProgressMongo.find({IsRoot: true}, rootDataFound);
+}
+
+function loadProgress(progress) {
+	if (progress.DocId) {
+		progress = ProgressMongo.find({Id: progress.DocId})[0].Progress;
+	}
+
+	for (var i = 0; i < progress.Chilren.length; i++) {
+		progress.Chilren[i] = loadProgress(progress.Chilren[i]);
+	}
+
+	return prog;
+}
+
+function rootDataFoud(err, rootProgress) {
+
+	if (err || rootProgress == null || rootProgress.length == 0) {
+		//var allLocationsUrl = getUrl('/AllLocations-g1-Places-World.html');
+		var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
+		//var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
 	
-	setTimeout(reportProgress, 10000, progress);
-}
-
-function unwrapProgress (prog)
-{
-	if (prog.Completed) {
-		return 1.0;
+		downloadTracker = new Progress(allLocationsUrl){IsRoot: true;
+	}
+	else if (rootProgress.length == 1) {
+		downloadTracker = loadProgress(rootProgress[0].Progress);
+	}
+	else {
+		throw new Exception("Bad data");
 	}
 
-	if (prog.Children.length == 0) {
-		return 0.0;
+	loadPlace(allLocationsUrl, downloadTracker);
+
+	console.log("Starting progress tracking");
+	function reportProgress(progress) {
+		writeData(progress);
+
+		var prog = unwrapProgress(progress);
+		console.log("Total progress: " + prog);
+
+		if (prog == 1.0) {
+			return;
+		}
+		
+		setTimeout(reportProgress, 10000, progress);
 	}
 
-	var sum = prog.Children.reduce(function (accum, value, index, array) {
-		return accum + unwrapProgress(value);
-	}, 0.0);
+	function writeData(progress, depth) {
+		var maxWriteDepth = 2;
+		depth++;
 
-	return sum / prog.Children.length;
+		for (var i = 0; i < progress.Children.length; i++) {
+			progress.Children[i] = writeData(progress, depth);
+		}
+
+		if (depth == maxWriteDepth) {
+			var savedId = createDocument(progress);
+			return {DocId: savedId};
+		}
+
+		return progress;
+	}
+
+	function unwrapProgress (prog)
+	{
+		if (prog.Completed) {
+			return 1.0;
+		}
+
+		if (prog.Children.length == 0) {
+			return 0.0;
+		}
+
+		var sum = prog.Children.reduce(function (accum, value, index, array) {
+			return accum + unwrapProgress(value);
+		}, 0.0);
+
+		return sum / prog.Children.length;
+	}
+
+	reportProgress(downloadTracker);
+
 }
-
-reportProgress(downloadTracker);
-
-
 
