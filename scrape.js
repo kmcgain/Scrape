@@ -81,11 +81,10 @@ var progressSchema = new mongoose.Schema({
 var ProgressMongo = mongoose.model('Scrape', progressSchema); 
 
 function createDocument(progress) {
-	console.log("Writing doc");
 	var doc = new ProgressMongo();
 	doc.Id = new mongoose.Types.ObjectId;
 	doc.Progress = progress;
-	doc.save(function(err) {console.log(err);});
+	doc.save();
 	return doc.Id;
 }
 
@@ -148,6 +147,7 @@ function rootDataFound(err, rootProgress) {
 
 		var newProg = {Children: []};
 
+		var nextDepth = depth == maxWriteDepth ? 0 : depth;
 		for (var i = 0; i < progress.Children.length; i++) {
 			newProg.Children[i] = writeData(progress.Children[i], depth);
 		}
