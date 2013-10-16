@@ -3,7 +3,7 @@ var request = require('request');
 var url = require('url');
 var mongoose = require('mongoose');
 
-mongoose.connect('mongodb://127.9.111.2:27017');
+mongoose.connect('mongodb://admin:dx7XmV8Hx1Hb@127.9.111.2:27017');
 mongoose.connection.once('open', function callback() {
 	// cool.
 	appStart();
