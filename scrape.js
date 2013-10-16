@@ -108,7 +108,7 @@ function loadProgress(progress) {
 	return prog;
 }
 
-function rootDataFoud(err, rootProgress) {
+function rootDataFound(err, rootProgress) {
 
 	if (err || rootProgress == null || rootProgress.length == 0) {
 		//var allLocationsUrl = getUrl('/AllLocations-g1-Places-World.html');
