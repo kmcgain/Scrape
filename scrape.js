@@ -115,7 +115,8 @@ function rootDataFoud(err, rootProgress) {
 		var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
 		//var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
 	
-		downloadTracker = new Progress(allLocationsUrl){IsRoot: true;
+		downloadTracker = new Progress(allLocationsUrl);
+		downloadTracker.IsRoot = true;
 	}
 	else if (rootProgress.length == 1) {
 		downloadTracker = loadProgress(rootProgress[0].Progress);
