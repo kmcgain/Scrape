@@ -73,19 +73,17 @@ var loadPlace = function(href, progressObj) {
 };
 
 var progressSchema = new mongoose.Schema({
-	Id: { type: mongoose.Schema.Types.ObjectId, index: true },
 	Progress: mongoose.Schema.Types.Mixed, 
-	IsRoot: { type: [Boolean], index: true },
+	IsRoot: { type: Boolean, index: true },
 });
 
 var ProgressMongo = mongoose.model('Scrape', progressSchema); 
 
 function createDocument(progress) {
 	var doc = new ProgressMongo();
-	doc.Id = new mongoose.Types.ObjectId;
 	doc.Progress = progress;
 	doc.save();
-	return doc.Id;
+	return doc._id;
 }
 
 function appStart() {
@@ -98,7 +96,7 @@ function appStart() {
 
 function loadProgress(progress) {
 	if (progress.DocId) {
-		progress = ProgressMongo.find({Id: progress.DocId})[0].Progress;
+		progress = ProgressMongo.find({_id: progress.DocId})[0].Progress;
 	}
 
 	for (var i = 0; i < progress.Chilren.length; i++) {
