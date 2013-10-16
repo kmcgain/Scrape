@@ -72,25 +72,25 @@ var loadPlace = function(href, progressObj) {
 	});
 };
 
+var progressSchema = new mongoose.Schema({
+	Id: { type: mongoose.Schema.Types.ObjectId, index: true },
+	Progress: mongoose.Schema.Types.Mixed, 
+	IsRoot: { type: [Boolean], index: true },
+});
 
+var ProgressMongo = mongoose.model('Scrape', progressSchema); 
+
+function createDocument(progress) {
+	console.log("Writing doc");
+	var doc = new ProgressMongo();
+	doc.Id = new mongoose.Types.ObjectId;
+	doc.Progress = progress;
+	doc.save(function(err) {console.log(err);});
+	return doc.Id;
+}
 
 function appStart() {
-	var progressSchema = new mongoose.Schema({
-		Id: { type: mongoose.Schema.Types.ObjectId, index: true },
-		Progress: mongoose.Schema.Types.Mixed, 
-		IsRoot: { type: [Boolean], index: true },
-	});
-
-	var ProgressMongo = mongoose.model('Scrape', progressSchema); 
-
-	function createDocument(progress) {
-		console.log("Writing doc");
-		var doc = new ProgressMongo();
-		doc.Id = new mongoose.Types.ObjectId;
-		doc.Progress = progress;
-		doc.save(function(err) {console.log(err);});
-		return doc.Id;
-	}
+	
 
 	console.log("Loading places");
 
