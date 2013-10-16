@@ -3,7 +3,7 @@ var request = require('request');
 var url = require('url');
 var mongoose = require('mongoose');
 
-mongoose.connect('mongodb://127.9.111.2:27017/test');
+mongoose.connect('mongodb://127.9.111.2:27017');
 mongoose.connection.once('open', function callback() {
 	// cool.
 	appStart();
@@ -84,10 +84,11 @@ function appStart() {
 	var ProgressMongo = mongoose.model('Scrape', progressSchema); 
 
 	function createDocument(progress) {
+		console.log("Writing doc");
 		var doc = new ProgressMongo();
 		doc.Id = new mongoose.Types.ObjectId;
 		doc.Progress = progress;
-		doc.save();
+		doc.save(function(err) {console.log(err);});
 		return doc.Id;
 	}
 
@@ -129,7 +130,7 @@ function rootDataFound(err, rootProgress) {
 
 	console.log("Starting progress tracking");
 	function reportProgress(progress) {
-		writeData(progress);
+		writeData(progress, 0);
 
 		var prog = unwrapProgress(progress);
 		console.log("Total progress: " + prog);
