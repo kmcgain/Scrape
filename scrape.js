@@ -147,7 +147,7 @@ function rootDataFound(err, rootProgress) {
 
 		var nextDepth = depth == maxWriteDepth ? 0 : depth;
 		for (var i = 0; i < progress.Children.length; i++) {
-			newProg.Children[i] = writeData(progress.Children[i], depth);
+			newProg.Children[i] = writeData(progress.Children[i], nextDepth);
 		}
 
 		if (depth == maxWriteDepth) {
