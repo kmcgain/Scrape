@@ -60,8 +60,8 @@ var loadPlace = function(href, progressObj) {
 console.log("Loading places");
 
 //var allLocationsUrl = getUrl('/AllLocations-g1-Places-World.html');
-//var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
-var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
+var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
+//var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
 var downloadTracker = new Progress(allLocationsUrl);
 loadPlace(allLocationsUrl, downloadTracker);
 
