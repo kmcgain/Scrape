@@ -128,7 +128,7 @@ function rootDataFound(err, rootProgress) {
 
 	console.log("Starting progress tracking");
 	function reportProgress(progress) {
-		writeData(progress, 0);
+		writeData(progress);
 
 		var prog = unwrapProgress(progress);
 		console.log("Total progress: " + prog);
@@ -140,7 +140,12 @@ function rootDataFound(err, rootProgress) {
 		setTimeout(reportProgress, 10000, progress);
 	}
 
-	function writeData(progress, depth) {
+	function writeData(progress) {
+		var root = writeDataAux(progress, 0);
+		createDocument(root);
+	}
+	
+	function writeDataAux(progress, depth) {
 		var maxWriteDepth = 2;
 		depth++;
 
