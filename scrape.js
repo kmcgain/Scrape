@@ -76,8 +76,8 @@ var loadPlace = function(href, progressObj) {
 
 function appStart() {
 	var progressSchema = new mongoose.Schema({
-		Id: { type: Schema.Types.ObjectId, index: true },
-		Progress: Schema.Types.Mixed, 
+		Id: { type: mongoose.Schema.Types.ObjectId, index: true },
+		Progress: mongoose.Schema.Types.Mixed, 
 		IsRoot: { type: [Boolean], index: true },
 	});
 
