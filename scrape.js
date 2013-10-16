@@ -75,6 +75,7 @@ var loadPlace = function(href, progressObj) {
 var progressSchema = new mongoose.Schema({
 	Progress: mongoose.Schema.Types.Mixed, 
 	IsRoot: { type: Boolean, index: true },
+	Url: String,
 });
 
 var ProgressMongo = mongoose.model('Scrape', progressSchema); 
@@ -143,7 +144,7 @@ function rootDataFound(err, rootProgress) {
 		var maxWriteDepth = 2;
 		depth++;
 
-		var newProg = {Children: []};
+		var newProg = {Children: [], Url: progress.Url};
 
 		var nextDepth = depth == maxWriteDepth ? 0 : depth;
 		for (var i = 0; i < progress.Children.length; i++) {
