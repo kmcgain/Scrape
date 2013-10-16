@@ -146,16 +146,18 @@ function rootDataFound(err, rootProgress) {
 		var maxWriteDepth = 2;
 		depth++;
 
+		var newProg = {Children: []};
+
 		for (var i = 0; i < progress.Children.length; i++) {
-			progress.Children[i] = writeData(progress.Children[i], depth);
+			newProg.Children[i] = writeData(progress.Children[i], depth);
 		}
 
 		if (depth == maxWriteDepth) {
-			var savedId = createDocument(progress);
+			var savedId = createDocument(newProg);
 			return {DocId: savedId};
 		}
 
-		return progress;
+		return newProg;
 	}
 
 	function unwrapProgress (prog)
