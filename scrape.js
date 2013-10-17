@@ -20,6 +20,7 @@ var tripSchema = new mongoose.Schema({
 var TripMongo = mongoose.model('Trip', tripSchema); 
 var registry = new trip.tripRegistry(TripMongo);
 
+var tripRegistry = new trip.tripRegistry(TripMongo);
 
 function getUrl(relHref) {
 	return url.resolve('http://www.tripadvisor.com.au', relHref);
@@ -145,7 +146,7 @@ function createDocument(progress) {
 	updateDocData(doc, progress);
 	doc.save();
 
-	tripRegistry.Store(doc);
+	trip.tripRegistry.Store(doc);
 	return doc._id;
 }
 
