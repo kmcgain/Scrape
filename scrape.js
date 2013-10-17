@@ -83,6 +83,7 @@ var ProgressMongo = mongoose.model('Scrape', progressSchema);
 function createDocument(progress) {
 	var doc = new ProgressMongo();
 	doc.Progress = progress;
+	doc.IsRoot = progress.IsRoot;
 	doc.save();
 	return doc._id;
 }
@@ -149,7 +150,7 @@ function rootDataFound(err, rootProgress) {
 		var maxWriteDepth = 2;
 		depth++;
 
-		var newProg = {Children: [], Url: progress.Url};
+		var newProg = {Children: [], Url: progress.Url, IsRoot: progress.IsRoot};
 
 		var nextDepth = depth == maxWriteDepth ? 0 : depth;
 		for (var i = 0; i < progress.Children.length; i++) {
