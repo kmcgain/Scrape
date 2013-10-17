@@ -2,6 +2,8 @@ var cheerio = require('cheerio');
 var request = require('request');
 var url = require('url');
 var mongoose = require('mongoose');
+var trip = require('Trip');
+
 
 mongoose.connect('mongodb://admin:dx7XmV8Hx1Hb@127.9.111.2:27017');
 mongoose.connection.once('open', function callback() {
@@ -9,17 +11,20 @@ mongoose.connection.once('open', function callback() {
 	appStart();
 });
 
+var tripSchema = new mongoose.Schema({
+	Children: [mongoose.Schema.ObjectId],
+	Url: String,
+	IsRoot: Boolean,
+	IsComplete: Boolean,	
+});
+var TripMongo = mongoose.model('Trip', tripSchema); 
+var registry = new trip.tripRegistry(TripMongo);
+
+
 function getUrl(relHref) {
 	return url.resolve('http://www.tripadvisor.com.au', relHref);
 }
 
-var Progress = function(href) {
-	this.Url = href;
-	this.Children = [];
-	this.IsHotel = false;
-	this.DbId = null; // Not all progress objects are persisted.
-	this.IsRoot = false;
-};
 
 var loadPlace = function(href, progressObj) {
 	//console.log('Loading:' + href);
@@ -72,54 +77,26 @@ var loadPlace = function(href, progressObj) {
 	});
 };
 
-var progressSchema = new mongoose.Schema({
-	Progress: mongoose.Schema.Types.Mixed, 
-	IsRoot: { type: Boolean, index: true },
-	Url: String,
-});
-
-var ProgressMongo = mongoose.model('Scrape', progressSchema); 
-
-function createDocument(progress) {
-	var doc = new ProgressMongo();
-	doc.Progress = progress;
-	doc.IsRoot = progress.IsRoot;
-	doc.save();
-	return doc._id;
-}
-
 function appStart() {
-	
-
 	console.log("Loading places");
 
-	ProgressMongo.find({IsRoot: true}, rootDataFound);
-}
-
-function loadProgress(progress) {
-	if (progress.DocId) {
-		progress = ProgressMongo.find({_id: progress.DocId})[0].Progress;
-	}
-
-	for (var i = 0; i < progress.Chilren.length; i++) {
-		progress.Chilren[i] = loadProgress(progress.Chilren[i]);
-	}
-
-	return prog;
+	TripMongo.find({IsRoot: true}, rootDataFound);
 }
 
 function rootDataFound(err, rootProgress) {
 
 	if (err || rootProgress == null || rootProgress.length == 0) {
 		//var allLocationsUrl = getUrl('/AllLocations-g1-Places-World.html');
-		var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
-		//var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
+		//var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
+		var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
 	
-		downloadTracker = new Progress(allLocationsUrl);
+		downloadTracker = new trip.Progress(allLocationsUrl);
 		downloadTracker.IsRoot = true;
 	}
 	else if (rootProgress.length == 1) {
-		downloadTracker = loadProgress(rootProgress[0].Progress);
+		var doc = rootProgress[0];
+		trip.tripRegistry.Store(doc);
+		downloadTracker = trip.lazyConvertDoc(doc);
 	}
 	else {
 		throw new Exception("Bad data");
@@ -141,33 +118,9 @@ function rootDataFound(err, rootProgress) {
 		setTimeout(reportProgress, 10000, progress);
 	}
 
-	function writeData(progress) {
-		var root = writeDataAux(progress, 0);
-		createDocument(root);
-	}
-	
-	function writeDataAux(progress, depth) {
-		var maxWriteDepth = 2;
-		depth++;
-
-		var newProg = {Children: [], Url: progress.Url, IsRoot: progress.IsRoot};
-
-		var nextDepth = depth == maxWriteDepth ? 0 : depth;
-		for (var i = 0; i < progress.Children.length; i++) {
-			newProg.Children[i] = writeData(progress.Children[i], nextDepth);
-		}
-
-		if (depth == maxWriteDepth) {
-			var savedId = createDocument(newProg);
-			return {DocId: savedId};
-		}
-
-		return newProg;
-	}
-
 	function unwrapProgress (prog)
 	{
-		if (prog.Completed) {
+		if (prog.IsComplete) {
 			return 1.0;
 		}
 
@@ -186,3 +139,41 @@ function rootDataFound(err, rootProgress) {
 
 }
 
+
+function createDocument(progress) {
+	var doc = new TripMongo();
+	updateDocData(doc, progress);
+	doc.save();
+
+	tripRegistry.Store(doc);
+	return doc._id;
+}
+
+function updateDocData(doc, progress) {
+	doc.Url = progress.Url;
+	doc.IsRoot = progress.IsRoot;
+	doc.IsComplete = progress.IsComplete;
+	doc.Children = progress.Children.map(function (item) {return item.MDoc_id});
+}
+
+function writeData(progress) {
+	writeDataAux(progress);
+}
+
+// TODO: Optimise by not always updating every item.
+// Only update items that weren't previously complete?
+function writeDataAux(progress) {
+	for (var i = 0; i < progress.Children.length; i++) {
+		writeDataAux(progress.Children[i]);
+	}
+
+	if (progress.TripDoc_id == null) {
+		progress.TripDoc_id = createDocument(progress);
+		return;
+	}
+	
+	var doc = trip.tripRegistry.Load(progress.TripDoc_id);
+	
+	updateDocData(doc, progress);
+	doc.save();
+}
