@@ -2,7 +2,7 @@ var cheerio = require('cheerio');
 var request = require('request');
 var url = require('url');
 var mongoose = require('mongoose');
-var trip = require('Trip');
+var trip = require('./Trip');
 
 
 mongoose.connect('mongodb://admin:dx7XmV8Hx1Hb@127.9.111.2:27017');
