@@ -44,7 +44,7 @@ var loadPlace = function(href, progressObj) {
 				return;
 			}
 			var tourismHref = getUrl(viewHotels.attr('href'));				
-			var newProgObj = new Progress(tourismHref);
+			var newProgObj = new trip.Progress(tourismHref);
 			progressObj.Children.push(newProgObj);
 			loadPlace(tourismHref, newProgObj);
 			return;
@@ -69,7 +69,7 @@ var loadPlace = function(href, progressObj) {
 				.each(function(i, linkElem) {
 					var childHref = getUrl($(this).attr('href'));
 
-					var newProgObj = new Progress(childHref);
+					var newProgObj = new trip.Progress(childHref);
 					progressObj.Children.push(newProgObj);						
 					loadPlace(childHref, newProgObj);
 				});
