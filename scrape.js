@@ -18,7 +18,6 @@ var tripSchema = new mongoose.Schema({
 	IsComplete: Boolean,	
 });
 var TripMongo = mongoose.model('Trip', tripSchema); 
-var registry = new trip.tripRegistry(TripMongo);
 
 var tripRegistry = new trip.tripRegistry(TripMongo);
 
@@ -96,7 +95,7 @@ function rootDataFound(err, rootProgress) {
 	}
 	else if (rootProgress.length == 1) {
 		var doc = rootProgress[0];
-		trip.tripRegistry.Store(doc);
+		tripRegistry.Store(doc);
 		downloadTracker = trip.lazyConvertDoc(doc);
 	}
 	else {
@@ -146,7 +145,7 @@ function createDocument(progress) {
 	updateDocData(doc, progress);
 	doc.save();
 
-	trip.tripRegistry.Store(doc);
+	tripRegistry.Store(doc);
 	return doc._id;
 }
 
@@ -173,7 +172,7 @@ function writeDataAux(progress) {
 		return;
 	}
 	
-	var doc = trip.tripRegistry.Load(progress.TripDoc_id);
+	var doc = tripRegistry.Load(progress.TripDoc_id);
 	
 	updateDocData(doc, progress);
 	doc.save();
