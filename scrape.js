@@ -25,7 +25,6 @@ function getUrl(relHref) {
 	return url.resolve('http://www.tripadvisor.com.au', relHref);
 }
 
-
 var loadPlace = function(href, progressObj) {
 	console.log('Loading:' + href);
 	
@@ -35,47 +34,106 @@ var loadPlace = function(href, progressObj) {
 
 		var $ = cheerio.load(body);
 
+		var selecter = null;
 		if (href.match(/\/Tourism-/)) {
 			var viewHotels = $('#HSCS_SEE_ALL');
 
 			if (viewHotels.length == 0) {
 				// No hotels for this location
-				progressObj.Completed = true;
+				progressObj.IsComplete = true;
 				return;
 			}
-			var tourismHref = getUrl(viewHotels.attr('href'));				
-			var newProgObj = new trip.Progress(tourismHref);
-			progressObj.Children.push(newProgObj);
-			loadPlace(tourismHref, newProgObj);
-			return;
+
+			selecter = viewHotels;					
 		}
 
 		if (href.match(/\/Hotels-/)) {
-			console.log('Found hotels page');
-			progressObj.IsHotel = true;
-
-			progressObj.Completed = true;
+			progressObj.IsComplete = true;
 			return;	
 			
-			
-			/*$('#ACCOM_OVERVIEW .listing .property_title')
-				.each(function(i, hotelTitle) {
-					console.log('Hotel ' + hotelTitle.text());
-				});*/
+			selecter = $('#ACCOM_OVERVIEW .listing .property_title');
 		}
 		
 		if (href.match(/\/AllLocations-/)) {
-			$('#BODYCON table td a')
-				.each(function(i, linkElem) {
-					var childHref = getUrl($(this).attr('href'));
-
-					var newProgObj = new trip.Progress(childHref);
-					progressObj.Children.push(newProgObj);						
-					loadPlace(childHref, newProgObj);
-				});
+			selecter = $('#BODYCON table td a');				
 		}
+
+		if (href.match(/\/Hotel_Review/)) {
+			processHotel(progressObj, href);			
+		}
+
+		selecter.each(function(i, linkElem) {
+			processChild(progressObj, $(this).attr('href'));
+		});
 	});
 };
+
+function processHotel(progressObj, href) {
+	var hotel = progressObj.Hotel;
+
+	$('#REVIEWS .reviewSelector').attr('id').each(function() {
+		// TODO: Here we may need to call value() on this??
+		var review = new Review(this);
+		hotel.Reviews.push(review);
+		updateReviewDetails(review); // TODO: Implement this method
+	});
+	
+	if (!isHotelLandingPage) {
+		// We don't want page the reviews
+		return;
+	}
+
+	// page the reviews
+	var pageCountTxt = $('.pagination .pgCount').text();
+	var pcMatch = pageCountTxt.match(/1-\d+ of (\d+) reviews/);
+
+	if (!pcMatch || pcMatch.length == 0) {
+		// no reviews?
+		return;
+	}
+
+	var totalNumberOfReviews = pcMatch[0];
+
+	for (var i = 10; i < totalNumberOfReviews; i += 10) {
+		var reviewHref = addReviewPageRef(href, i);
+		loadPage(reviewHref, progressObj);
+	}			
+}
+
+function addReviewPageRef(href, number) {
+	http://www.tripadvisor.com.au/Hotel_Review-g255100-d549485-Reviews-or20-The_Langham_Melbourne-Melbourne_Victoria.html#REVIEWS
+	var reviewIndex = href.indexOf('-Reviews-');
+	var newHref = href.substring(0, reviewIndex + 9)
+		+ 'or' + number + '-'
+		+ href.substring(reviewIndex+9, href.length - reviewIndex);
+
+		return newHref;
+}
+
+function loadReviewPage() {
+	'http://www.tripadvisor.com.au/Hotel_Review-' + hotelReviewId + '-Reviews-or10-' + hotelName + '-' + region + '-' location + '.html'
+Host: www.tripadvisor.com.au
+
+}
+
+function getUserReviews(progress, hotelIdentifier, reviewIds) {
+	if (reviewIds == null || reviewIds.length == 0) {
+		return;
+	}
+
+	var target = reviewIds[0];
+	var extraAdTarget = target;
+	var ids = reviewIds.join(',');
+	var url = 'www.tripadvisor.com.au/ExpandedUserReviews-' + hotelIdentifier + '?target=173080720&context=1&reviews=' + ids + '&servlet=Hotel_Review&expand=1&extraad=true&extraadtarget=' + extraAdTarget;
+	// TODO: Get the reviews. and add to progress
+}
+
+function processChild(progress, href) {
+	var tourismHref = getUrl(href);				
+	var newProgObj = new trip.Progress(tourismHref);
+	progress.Children.push(newProgObj);
+	loadPlace(tourismHref, newProgObj);
+}
 
 function appStart() {
 	console.log("Loading places");
