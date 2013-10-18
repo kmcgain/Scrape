@@ -51,7 +51,7 @@ var loadPlace = function(href, progressObj) {
 		}
 
 		if (href.match(/\/Hotels-/)) {
-			//console.log('Found hotels page');
+			console.log('Found hotels page');
 			progressObj.IsHotel = true;
 
 			progressObj.Completed = true;
