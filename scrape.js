@@ -27,7 +27,7 @@ function getUrl(relHref) {
 
 
 var loadPlace = function(href, progressObj) {
-	//console.log('Loading:' + href);
+	console.log('Loading:' + href);
 	
 	request(href, function(err, resp, body) {
 		if (err)
@@ -156,8 +156,12 @@ function updateDocData(doc, progress) {
 	doc.Children = progress.Children.map(function (item) {return item.TripDoc_id;});
 }
 
+var writingData = false;
 function writeData(progress) {
+	// Prevent termination while writing
+	writingData = true;
 	writeDataAux(progress);
+	writingData = false;
 }
 
 // TODO: Optimise by not always updating every item.
@@ -177,3 +181,15 @@ function writeDataAux(progress) {
 	updateDocData(doc, progress);
 	doc.save();
 }
+
+function handleExit() {
+	if (writingData) {
+		process.nextTick(handleExit);
+		return;
+	}
+
+	process.exit(0);
+};
+
+process.on('SIGINT', handleExit);
+process.on('SIGTERM', handleExit);
