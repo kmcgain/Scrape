@@ -153,7 +153,7 @@ function updateDocData(doc, progress) {
 	doc.Url = progress.Url;
 	doc.IsRoot = progress.IsRoot;
 	doc.IsComplete = progress.IsComplete;
-	doc.Children = progress.Children.map(function (item) {return item.MDoc_id});
+	doc.Children = progress.Children.map(function (item) {return item.TripDoc_id;});
 }
 
 function writeData(progress) {
