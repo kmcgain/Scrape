@@ -1,144 +1,40 @@
-var cheerio = require('cheerio');
 var request = require('request');
 var url = require('url');
-var mongoose = require('mongoose');
 var trip = require('./Trip');
+var place = require('./place');
+var TripDocumentManager = require('./trip-document-manager.js').TripDocumentManager;
+
+var tripDocumentManager = null;
+
+// var deferred = require('deferred');
+// deferred.monitor(20000, function (err) {
+// 	console.log('err');
+// });
+
+require('./trip-schemas').Entities()
+.then(function (schemas) {	
+	var tripEntities = schemas;
+
+	var tripRegistry = new trip.tripRegistry(tripEntities.TripMongo);
+	var hotelRegistry = new trip.tripRegistry(tripEntities.HotelMongo);
+
+	tripDocumentManager = new TripDocumentManager(tripRegistry, hotelRegistry, tripEntities);	
+
+	console.log('manage');
+	appStart(tripEntities);
+})
+.done();
 
 
-mongoose.connect('mongodb://admin:dx7XmV8Hx1Hb@127.9.111.2:27017');
-mongoose.connection.once('open', function callback() {
-	// cool.
-	appStart();
-});
-
-var tripSchema = new mongoose.Schema({
-	Children: [mongoose.Schema.ObjectId],
-	Url: String,
-	IsRoot: Boolean,
-	IsComplete: Boolean,	
-});
-var TripMongo = mongoose.model('Trip', tripSchema); 
-
-var tripRegistry = new trip.tripRegistry(TripMongo);
 
 function getUrl(relHref) {
 	return url.resolve('http://www.tripadvisor.com.au', relHref);
 }
 
-var loadPlace = function(href, progressObj) {
-	console.log('Loading:' + href);
-	
-	request(href, function(err, resp, body) {
-		if (err)
-			throw err;
-
-		var $ = cheerio.load(body);
-
-		var selecter = null;
-		if (href.match(/\/Tourism-/)) {
-			var viewHotels = $('#HSCS_SEE_ALL');
-
-			if (viewHotels.length == 0) {
-				// No hotels for this location
-				progressObj.IsComplete = true;
-				return;
-			}
-
-			selecter = viewHotels;					
-		}
-
-		if (href.match(/\/Hotels-/)) {
-			progressObj.IsComplete = true;
-			return;	
-			
-			selecter = $('#ACCOM_OVERVIEW .listing .property_title');
-		}
-		
-		if (href.match(/\/AllLocations-/)) {
-			selecter = $('#BODYCON table td a');				
-		}
-
-		if (href.match(/\/Hotel_Review/)) {
-			processHotel(progressObj, href);			
-		}
-
-		selecter.each(function(i, linkElem) {
-			processChild(progressObj, $(this).attr('href'));
-		});
-	});
-};
-
-function processHotel(progressObj, href) {
-	var hotel = progressObj.Hotel;
-
-	$('#REVIEWS .reviewSelector').attr('id').each(function() {
-		// TODO: Here we may need to call value() on this??
-		var review = new Review(this);
-		hotel.Reviews.push(review);
-		updateReviewDetails(review); // TODO: Implement this method
-	});
-	
-	if (!isHotelLandingPage) {
-		// We don't want page the reviews
-		return;
-	}
-
-	// page the reviews
-	var pageCountTxt = $('.pagination .pgCount').text();
-	var pcMatch = pageCountTxt.match(/1-\d+ of (\d+) reviews/);
-
-	if (!pcMatch || pcMatch.length == 0) {
-		// no reviews?
-		return;
-	}
-
-	var totalNumberOfReviews = pcMatch[0];
-
-	for (var i = 10; i < totalNumberOfReviews; i += 10) {
-		var reviewHref = addReviewPageRef(href, i);
-		loadPage(reviewHref, progressObj);
-	}			
-}
-
-function addReviewPageRef(href, number) {
-	http://www.tripadvisor.com.au/Hotel_Review-g255100-d549485-Reviews-or20-The_Langham_Melbourne-Melbourne_Victoria.html#REVIEWS
-	var reviewIndex = href.indexOf('-Reviews-');
-	var newHref = href.substring(0, reviewIndex + 9)
-		+ 'or' + number + '-'
-		+ href.substring(reviewIndex+9, href.length - reviewIndex);
-
-		return newHref;
-}
-
-function loadReviewPage() {
-	'http://www.tripadvisor.com.au/Hotel_Review-' + hotelReviewId + '-Reviews-or10-' + hotelName + '-' + region + '-' location + '.html'
-Host: www.tripadvisor.com.au
-
-}
-
-function getUserReviews(progress, hotelIdentifier, reviewIds) {
-	if (reviewIds == null || reviewIds.length == 0) {
-		return;
-	}
-
-	var target = reviewIds[0];
-	var extraAdTarget = target;
-	var ids = reviewIds.join(',');
-	var url = 'www.tripadvisor.com.au/ExpandedUserReviews-' + hotelIdentifier + '?target=173080720&context=1&reviews=' + ids + '&servlet=Hotel_Review&expand=1&extraad=true&extraadtarget=' + extraAdTarget;
-	// TODO: Get the reviews. and add to progress
-}
-
-function processChild(progress, href) {
-	var tourismHref = getUrl(href);				
-	var newProgObj = new trip.Progress(tourismHref);
-	progress.Children.push(newProgObj);
-	loadPlace(tourismHref, newProgObj);
-}
-
-function appStart() {
+function appStart(tripEntities) {
 	console.log("Loading places");
 
-	TripMongo.find({IsRoot: true}, rootDataFound);
+	tripEntities.TripMongo.find({IsRoot: true}, rootDataFound);
 }
 
 function rootDataFound(err, rootProgress) {
@@ -153,23 +49,24 @@ function rootDataFound(err, rootProgress) {
 	}
 	else if (rootProgress.length == 1) {
 		var doc = rootProgress[0];
-		tripRegistry.Store(doc);
+		tripDocumentManager.tripRegistry.Store(doc);
 		downloadTracker = trip.lazyConvertDoc(doc);
 	}
 	else {
 		throw new Exception("Bad data");
 	}
 
-	loadPlace(allLocationsUrl, downloadTracker);
+	place.load(allLocationsUrl, downloadTracker);
 
 	console.log("Starting progress tracking");
 	function reportProgress(progress) {
-		writeData(progress);
+		tripDocumentManager.WriteData(progress);
 
 		var prog = unwrapProgress(progress);
 		console.log("Total progress: " + prog);
 
 		if (prog == 1.0) {
+			tripDocumentManager.finish();
 			return;
 		}
 		
@@ -197,51 +94,8 @@ function rootDataFound(err, rootProgress) {
 
 }
 
-
-function createDocument(progress) {
-	var doc = new TripMongo();
-	updateDocData(doc, progress);
-	doc.save();
-
-	tripRegistry.Store(doc);
-	return doc._id;
-}
-
-function updateDocData(doc, progress) {
-	doc.Url = progress.Url;
-	doc.IsRoot = progress.IsRoot;
-	doc.IsComplete = progress.IsComplete;
-	doc.Children = progress.Children.map(function (item) {return item.TripDoc_id;});
-}
-
-var writingData = false;
-function writeData(progress) {
-	// Prevent termination while writing
-	writingData = true;
-	writeDataAux(progress);
-	writingData = false;
-}
-
-// TODO: Optimise by not always updating every item.
-// Only update items that weren't previously complete?
-function writeDataAux(progress) {
-	for (var i = 0; i < progress.Children.length; i++) {
-		writeDataAux(progress.Children[i]);
-	}
-
-	if (progress.TripDoc_id == null) {
-		progress.TripDoc_id = createDocument(progress);
-		return;
-	}
-	
-	var doc = tripRegistry.Load(progress.TripDoc_id);
-	
-	updateDocData(doc, progress);
-	doc.save();
-}
-
 function handleExit() {
-	if (writingData) {
+	if (tripDocumentManager.WritingData) {
 		process.nextTick(handleExit);
 		return;
 	}
