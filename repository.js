@@ -9,8 +9,6 @@ mongoose.connect('mongodb://admin:dx7XmV8Hx1Hb@127.0.0.1:27018');
 exports.repository = function() {
 	var def = new deferred();
 
-
-	
 	mongoose.connection.once('open', function () {
 		mongoose.modelExt = function(collection, schema) {
 			var md = mongoose.model(collection, schema);

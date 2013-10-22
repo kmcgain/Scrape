@@ -1,3 +1,21 @@
+var deferred = require('deferred');
+var promisify = deferred.promisify;
+var sprintf = require('util').format;
+
+var pSave = function(doc) {
+	var def = new deferred();
+
+	doc.save(function(err) {
+				if (err) {
+					console.log('Error: ' + err);
+					throw new Error(err);
+				}
+
+				def.resolve();
+			});
+
+	return def.promise;
+};
 
 exports.TripDocumentManager = function (tripRegistry, hotelRegistry, entities) {
 	this.tripRegistry = tripRegistry;
@@ -5,23 +23,30 @@ exports.TripDocumentManager = function (tripRegistry, hotelRegistry, entities) {
 
 	this.finish = entities.closeRepository;
 
-	var createDocument = function(progress) {
-		var doc = new entities.TripMongo();
-		updateDocData(doc, progress);
-		doc.save();
+	var createDocument = function(progress, idCallback) {
+		var def = new deferred();
 
-		tripRegistry.Store(doc);
-		return doc._id;
+		var doc = new entities.TripMongo();
+
+		updateDocData(doc, progress)
+		.then(function() {return pSave(doc);})
+		.then(def.resolve)
+		.done();
+		
+		tripRegistry.Store(doc); // we can register the doc before it is saved back to the repo!	
+
+		idCallback(doc._id);
+		return def.promise;
 	}
 
-	var createHotelDocument = function(hotel) {
+	var createHotelDocument = function(hotel, idCallback) {
 		var doc = new entities.HotelMongo();
-		doc.save();
 
 		updateHotelDoc(doc, hotel);
-
 		hotelRegistry.Store(doc);
-		return doc._id;
+		idCallback(doc._id);
+
+		return pSave(doc);
 	}
 
 	var updateDocData = function(doc, progress) {
@@ -31,8 +56,10 @@ exports.TripDocumentManager = function (tripRegistry, hotelRegistry, entities) {
 		doc.Children = progress.Children.map(function (item) {return item.TripDoc_id;});
 
 		if (progress.Hotel) {
-			updateHotel(doc, progress.Hotel);
+			return updateHotel(doc, progress.Hotel);
 		}
+
+		return new deferred(0);
 	}
 
 	var updateHotelDoc = function(doc, hotel) {
@@ -44,38 +71,64 @@ exports.TripDocumentManager = function (tripRegistry, hotelRegistry, entities) {
 
 	var updateHotel = function(progressDoc, hotel) {
 		if (hotel.Doc_id == null) {
-			hotel.Doc_id = createHotelDocument(hotel);
-			return;
+			return createHotelDocument(hotel, function(id){hotel.Doc_id = id});			
 		}
 
 		var hotelDoc = hotelRegistry.Load(hotel.Doc_id);
 		updateHotelDoc(hotelDoc, hotel);
+
+		return new deferred(0);
 	}
 
-	this.WritingData = false;
 	this.WriteData = function(progress) {
+
 		// Prevent termination while writing
+		var out = writeDataAux(progress);		
+
+		//output(progress);
 		debugger;
-		writingData = true;
-		writeDataAux(progress);
-		writingData = false;
+
+		return out;
 	}
 
 	// TODO: Optimise by not always updating every item.
 	// Only update items that weren't previously complete?
-	var writeDataAux = function(progress) {		
+	var writeDataAux = function(progress) {
+
+		var promises = [];
 		for (var i = 0; i < progress.Children.length; i++) {
-			writeDataAux(progress.Children[i]);
+			promises.push(writeDataAux(progress.Children[i]));
 		}
 
 		if (progress.TripDoc_id == null) {
-			progress.TripDoc_id = createDocument(progress);
-			return;
+			promises.push(createDocument(progress, function (id) {progress.TripDoc_id = id}));
+			return deferred.map(promises);
 		}
 		
 		var doc = tripRegistry.Load(progress.TripDoc_id);
-		
-		updateDocData(doc, progress);
-		doc.save();
+				
+		var docDef = new deferred();
+		promises.push(docDef.promise);
+
+		updateDocData(doc, progress)
+		.then(function () {
+			return pSave(doc); 
+		})
+		.then(docDef.resolve)
+		.done();
+
+		return deferred.map(promises);
 	}
+}
+
+function output(progress) {
+	// var out = outputAux(progress);
+	// console.log(sprintf("Writing data: %j", out).replace(/,/g, "\n"));
+	console.log(JSON.stringify(outputAux(progress), null, "\t"));	
+}
+
+function outputAux(progress) {	
+	var children = progress.Children.map(outputAux);
+
+	return {TripDoc_id: progress.TripDoc_id, Url: progress.Url, Hotel: progress.Hotel != null ? progress.Hotel.Title : null, Children: children};
 }

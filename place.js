@@ -83,15 +83,18 @@ var processChildHotel = function(href, progress, $) {
 }
 
 var processChild = function(href, progress, childProcessor) {
-	var absHref = getUrl(href);				
-	var newProgObj = new trip.Progress(absHref);
-	progress.Children.push(newProgObj);
-
-	if (childProcessor != null) {
-		return childProcessor(absHref, newProgObj);
+	var absHref = getUrl(href);	
+	var newProgress = progress;
+	if (progress.Hotel == null) {			
+		newProgress = new trip.Progress(absHref);
+		progress.Children.push(newProgress);
 	}
 
-	return loadPlace(absHref, newProgObj);
+	if (childProcessor != null) {
+		return childProcessor(absHref, newProgress);
+	}
+
+	return loadPlace(absHref, newProgress);
 }
 
 var processHotel = function(href, progressObj, $) {

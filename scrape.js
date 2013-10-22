@@ -20,7 +20,6 @@ require('./trip-schemas').Entities()
 
 	tripDocumentManager = new TripDocumentManager(tripRegistry, hotelRegistry, tripEntities);	
 
-	console.log('manage');
 	appStart(tripEntities);
 })
 .done();
@@ -39,6 +38,7 @@ function appStart(tripEntities) {
 
 function rootDataFound(err, rootProgress) {
 
+	// Start from scratch
 	if (err || rootProgress == null || rootProgress.length == 0) {
 		//var allLocationsUrl = getUrl('/AllLocations-g1-Places-World.html');
 		//var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
@@ -47,6 +47,7 @@ function rootDataFound(err, rootProgress) {
 		downloadTracker = new trip.Progress(allLocationsUrl);
 		downloadTracker.IsRoot = true;
 	}
+	// Found root
 	else if (rootProgress.length == 1) {
 		var doc = rootProgress[0];
 		tripDocumentManager.tripRegistry.Store(doc);
@@ -60,17 +61,20 @@ function rootDataFound(err, rootProgress) {
 
 	console.log("Starting progress tracking");
 	function reportProgress(progress) {
-		tripDocumentManager.WriteData(progress);
+		tripDocumentManager.WriteData(progress)
+		.then(function() {
+			var prog = unwrapProgress(progress);
+			console.log("Total progress: " + prog);
 
-		var prog = unwrapProgress(progress);
-		console.log("Total progress: " + prog);
-
-		if (prog == 1.0) {
-			tripDocumentManager.finish();
-			return;
-		}
-		
-		setTimeout(reportProgress, 10000, progress);
+			if (prog == 1.0) {
+				debugger;
+				tripDocumentManager.finish();
+				return;
+			}
+			
+			setTimeout(reportProgress, 10000, progress);
+		})
+		.done();
 	}
 
 	function unwrapProgress (prog)
