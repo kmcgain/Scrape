@@ -22,6 +22,10 @@ exports.getReviewDetails = function(hotel, reviews) {
 
 	request(href, function(error, resp, body) {
 		if (error) {throw new Error(error);}
+		if (resp.statusCode != 200) {
+			throw new Error("We didn't get 200, we got " + resp.statusCode + " while loading " + href);
+		}
+
 
 		var $ = cheerio.load(body);
 
