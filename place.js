@@ -15,8 +15,6 @@ var loadPlace = function(href, progressObj) {
 		return new deferred(0);
 	}
 
-	console.log('Loading:' + href);
-
 	var def =  deferred();
 	
 	promisify(request)(href)
