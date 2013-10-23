@@ -15,6 +15,10 @@ var loadPlace = function(href, progressObj) {
 		return new deferred(0);
 	}
 
+	if (exports.logger) {
+		exports.logger.verbose('Loading: ' + href);
+	}
+
 	var def =  deferred();
 	
 	promisify(request)(href)
@@ -195,6 +199,7 @@ function isHotelLandingPage(href) {
 }
 
 exports.load = loadPlace;
+exports.logger = null;
 
 // TODO: Copied and pasted
 function getUrl(relHref) {

@@ -4,19 +4,22 @@ var trip = require('./Trip');
 var place = require('./place');
 require('./arrayExt');
 
+var winston = require('winston');
+var logger = new (winston.Logger)({
+	levels: {progress: 0, verbose: 1, error: 2},
+	transports: [
+		//new winston.transports.File({filename: 'progress.log', level: 'progress'}),
+		new winston.transports.File({filename: 'verbose.log', level: 'verbose'})
+	]
+});
+
+place.logger = logger;
+
 var progressReporter = require('./progress-reporter');
 
 var TripDocumentManager = require('./trip-document-manager.js').TripDocumentManager;
 
 var tripDocumentManager = null;
-
-var deferred = require('deferred');
-deferred.monitor(40000, function (err) {
-	console.log(err);
-});
-
-deferred.profile();
-
 
 require('./trip-schemas').Entities()
 .then(function (schemas) {	
