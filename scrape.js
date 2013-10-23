@@ -2,14 +2,21 @@ var request = require('request');
 var url = require('url');
 var trip = require('./Trip');
 var place = require('./place');
+require('./arrayExt');
+
+var progressReporter = require('./progress-reporter');
+
 var TripDocumentManager = require('./trip-document-manager.js').TripDocumentManager;
 
 var tripDocumentManager = null;
 
-// var deferred = require('deferred');
-// deferred.monitor(20000, function (err) {
-// 	console.log('err');
-// });
+var deferred = require('deferred');
+deferred.monitor(40000, function (err) {
+	console.log(err);
+});
+
+deferred.profile();
+
 
 require('./trip-schemas').Entities()
 .then(function (schemas) {	
@@ -41,8 +48,8 @@ function rootDataFound(err, rootProgress) {
 	// Start from scratch
 	if (err || rootProgress == null || rootProgress.length == 0) {
 		//var allLocationsUrl = getUrl('/AllLocations-g1-Places-World.html');
-		//var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
-		var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
+		var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
+		//var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
 	
 		downloadTracker = new trip.Progress(allLocationsUrl);
 		downloadTracker.IsRoot = true;
@@ -51,47 +58,31 @@ function rootDataFound(err, rootProgress) {
 	else if (rootProgress.length == 1) {
 		var doc = rootProgress[0];
 		tripDocumentManager.tripRegistry.Store(doc);
-		downloadTracker = trip.lazyConvertDoc(doc);
+		downloadTracker = trip.lazyConvertDoc(doc, tripDocumentManager.tripRegistry);
 	}
 	else {
 		throw new Exception("Bad data");
 	}
 
-	place.load(allLocationsUrl, downloadTracker);
+	place.load(downloadTracker.Url, downloadTracker);
 
 	console.log("Starting progress tracking");
 	function reportProgress(progress) {
 		tripDocumentManager.WriteData(progress)
 		.then(function() {
-			var prog = unwrapProgress(progress);
+			return progressReporter(progress);
+		})
+		.then(function(prog) {
 			console.log("Total progress: " + prog);
 
-			if (prog == 1.0) {
-				debugger;
+			if (prog == 1.0) {				
 				tripDocumentManager.finish();
 				return;
 			}
 			
-			setTimeout(reportProgress, 10000, progress);
+			setTimeout(reportProgress, 10000, progress);			
 		})
 		.done();
-	}
-
-	function unwrapProgress (prog)
-	{
-		if (prog.IsComplete) {
-			return 1.0;
-		}
-
-		if (prog.Children.length == 0) {
-			return 0.0;
-		}
-
-		var sum = prog.Children.reduce(function (accum, value, index, array) {
-			return accum + unwrapProgress(value);
-		}, 0.0);
-
-		return sum / prog.Children.length;
 	}
 
 	reportProgress(downloadTracker);

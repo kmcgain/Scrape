@@ -10,6 +10,11 @@ var Hotel = require('./hotel').Hotel;
 var promisify = deferred.promisify;
 
 var loadPlace = function(href, progressObj) {
+	// NOTE: This will prevent the change in data over time
+	if (progressObj.IsComplete) {
+		return new deferred(0);
+	}
+
 	console.log('Loading:' + href);
 
 	var def =  deferred();
@@ -31,6 +36,7 @@ var loadPlace = function(href, progressObj) {
 				// No hotels for this location
 				progressObj.IsComplete = true;
 
+				def.resolve();
 				return;
 			}
 
@@ -45,6 +51,7 @@ var loadPlace = function(href, progressObj) {
 			selecter = $('#BODYCON table td a');				
 		}
 
+		// Special Case
 		if (href.match(/\/Hotel_Review/)) {	
 			// TODO: make this align with the other cases so we can refactor.		
 			processChildHotel(progressObj, href, $)
@@ -84,17 +91,41 @@ var processChildHotel = function(href, progress, $) {
 
 var processChild = function(href, progress, childProcessor) {
 	var absHref = getUrl(href);	
-	var newProgress = progress;
-	if (progress.Hotel == null) {			
-		newProgress = new trip.Progress(absHref);
-		progress.Children.push(newProgress);
-	}
 
-	if (childProcessor != null) {
-		return childProcessor(absHref, newProgress);
-	}
+	var def = new deferred();
 
-	return loadPlace(absHref, newProgress);
+	deferred.map(progress.GetChildren(), function(item){return item})
+	.then(function(children) {
+		var child = children.singleOrNone(function(elem) { elem.Url = absHref; });
+
+		if (child != null) {
+			if (child.IsComplete) {
+				def.resolve();				
+			}
+
+			var newProgress = child;
+		}
+		else {
+			var newProgress = progress;
+			if (progress.Hotel == null) {			
+				newProgress = new trip.Progress(absHref);
+				progress.AddChild(newProgress);
+			}
+		}
+
+		if (childProcessor != null) {
+			childProcessor(absHref, newProgress)
+			.then(def.resolve)
+			.done();
+		}
+
+		loadPlace(absHref, newProgress)
+		.then(def.resolve)
+		.done();
+	})
+	.done();
+
+	return def.promise;
 }
 
 var processHotel = function(href, progressObj, $) {
@@ -133,7 +164,6 @@ var processHotel = function(href, progressObj, $) {
 
 	if (!pcMatch || pcMatch.length == 0) {
 		// no reviews?
-		console.log('no reviews');		
 		progressObj.IsComplete = true;
 		return deferred(0);
 	}
@@ -147,17 +177,12 @@ var processHotel = function(href, progressObj, $) {
 		);
 	}
 
-	var def = new deferred();
-
-	deferred.map(reviewPromises)
-	.then(function () {
+	return deferWork(function() {
+		return deferred.map(reviewPromises);
+	}, function() {
 		console.log('The entire hotel has been completed at this point');
 		progressObj.Hotel.IsComplete = true;
-		def.resolve();
-	})
-	.done();
-
-	return def.promise;
+	});
 };
 
 function getReviewPageRef(href, pageCount) {
@@ -172,7 +197,6 @@ function isHotelLandingPage(href) {
 }
 
 exports.load = loadPlace;
-exports.processHotel = processHotel;
 
 // TODO: Copied and pasted
 function getUrl(relHref) {

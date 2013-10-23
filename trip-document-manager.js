@@ -1,4 +1,5 @@
 var deferred = require('deferred');
+var deferWork = require('./deferWork');
 var promisify = deferred.promisify;
 var sprintf = require('util').format;
 
@@ -53,13 +54,21 @@ exports.TripDocumentManager = function (tripRegistry, hotelRegistry, entities) {
 		doc.Url = progress.Url;
 		doc.IsRoot = progress.IsRoot;
 		doc.IsComplete = progress.IsComplete;
-		doc.Children = progress.Children.map(function (item) {return item.TripDoc_id;});
+		doc.Children = [];
+
+		var promises = [deferWork(progress.GetChildren(), function(child) {
+			doc.Children.push(child.TripDoc_id);				
+		})];
 
 		if (progress.Hotel) {
-			return updateHotel(doc, progress.Hotel);
+			promises.push(updateHotel(doc, progress.Hotel));
 		}
 
-		return new deferred(0);
+		if (promises.length == 0) {
+			promises.push(new deferred(0));
+		}
+
+		return deferred.map(promises);
 	}
 
 	var updateHotelDoc = function(doc, hotel) {
@@ -86,7 +95,6 @@ exports.TripDocumentManager = function (tripRegistry, hotelRegistry, entities) {
 		var out = writeDataAux(progress);		
 
 		//output(progress);
-		debugger;
 
 		return out;
 	}
@@ -94,28 +102,27 @@ exports.TripDocumentManager = function (tripRegistry, hotelRegistry, entities) {
 	// TODO: Optimise by not always updating every item.
 	// Only update items that weren't previously complete?
 	var writeDataAux = function(progress) {
-
-		var promises = [];
-		for (var i = 0; i < progress.Children.length; i++) {
-			promises.push(writeDataAux(progress.Children[i]));
-		}
-
+		var promises = [deferWork(progress.GetChildren(), writeDataAux)];
+		
 		if (progress.TripDoc_id == null) {
 			promises.push(createDocument(progress, function (id) {progress.TripDoc_id = id}));
 			return deferred.map(promises);
 		}
 		
-		var doc = tripRegistry.Load(progress.TripDoc_id);
-				
 		var docDef = new deferred();
-		promises.push(docDef.promise);
 
-		updateDocData(doc, progress)
-		.then(function () {
-			return pSave(doc); 
+		tripRegistry.Load(progress.TripDoc_id)
+		.then(function(doc) {
+			updateDocData(doc, progress)
+			.then(function () {
+				return pSave(doc); 
+			})
+			.then(docDef.resolve)
+			.done();
 		})
-		.then(docDef.resolve)
 		.done();
+
+		promises.push(docDef.promise);
 
 		return deferred.map(promises);
 	}
