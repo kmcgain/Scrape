@@ -9,6 +9,8 @@ var Hotel = require('./hotel').Hotel;
 
 var promisify = deferred.promisify;
 
+request.setMaxListeners(0);
+
 var loadPlace = function(href, progressObj) {
 	// NOTE: This will prevent the change in data over time
 	if (progressObj.IsComplete) {

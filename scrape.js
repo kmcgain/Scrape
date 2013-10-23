@@ -4,6 +4,8 @@ var trip = require('./Trip');
 var place = require('./place');
 require('./arrayExt');
 
+request.setMaxListeners(0);
+
 var winston = require('winston');
 var logger = new (winston.Logger)({
 	levels: {progress: 0, verbose: 1, error: 2},

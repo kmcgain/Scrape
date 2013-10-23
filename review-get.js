@@ -4,6 +4,8 @@ var cheerio = require('cheerio');
 var deferred = require('deferred');
 var promisify = deferred.promisify;
 
+request.setMaxListeners(0);
+
 exports.getReviewDetails = function(hotel, reviews) {
 	if (reviews.length == 0) {
 		return deferred(0);
