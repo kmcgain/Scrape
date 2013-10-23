@@ -40,7 +40,7 @@ exports.getReviewDetails = function(hotel, reviews) {
 
 		def.resolve();
 
-	}).setMaxListeners(100);
+	}).setMaxListeners(0);
 
 	return def.promise();
 }

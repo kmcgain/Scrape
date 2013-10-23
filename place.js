@@ -76,7 +76,7 @@ var loadPlace = function(href, progressObj) {
 			def.resolve();
 		})
 		.done();
-	}).setMaxListeners(100);	
+	}).setMaxListeners(0);	
 
 	return def.promise;
 };
