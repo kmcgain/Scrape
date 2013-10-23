@@ -4,8 +4,6 @@ var cheerio = require('cheerio');
 var deferred = require('deferred');
 var promisify = deferred.promisify;
 
-request.setMaxListeners(0);
-
 exports.getReviewDetails = function(hotel, reviews) {
 	if (reviews.length == 0) {
 		return deferred(0);
@@ -22,10 +20,8 @@ exports.getReviewDetails = function(hotel, reviews) {
 			'?target=' + target + '&context=1&reviews=' + reviewIds + 
 			'&servlet=Hotel_Review&expand=1&extraad=true&extraadtarget=' + target;
 
-	promisify(request)(href)
-	.then(function (args) {
-		var resp = args[0],
-			body = args[1];
+	request(href, function(error, resp, body) {
+		if (error) {throw new Error(error);}
 
 		var $ = cheerio.load(body);
 
@@ -43,8 +39,8 @@ exports.getReviewDetails = function(hotel, reviews) {
 		});		
 
 		def.resolve();
-	})
-	.done();
+
+	}).setMaxListeners(100);
 
 	return def.promise();
 }

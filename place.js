@@ -9,8 +9,6 @@ var Hotel = require('./hotel').Hotel;
 
 var promisify = deferred.promisify;
 
-request.setMaxListeners(0);
-
 var loadPlace = function(href, progressObj) {
 	// NOTE: This will prevent the change in data over time
 	if (progressObj.IsComplete) {
@@ -23,11 +21,8 @@ var loadPlace = function(href, progressObj) {
 
 	var def =  deferred();
 	
-	promisify(request)(href)
-	.then(function(args) {
-		var resp = args[0],
-			body = args[1];
-
+	request(href, function(error, resp, body) {	
+		if (error) {throw new Error(error);}
 		var resolutionHandler = null;
 
 		var $ = cheerio.load(body);
@@ -81,8 +76,7 @@ var loadPlace = function(href, progressObj) {
 			def.resolve();
 		})
 		.done();
-	})
-	.done();
+	}).setMaxListeners(100);	
 
 	return def.promise;
 };

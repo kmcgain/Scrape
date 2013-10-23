@@ -1,10 +1,7 @@
-var request = require('request');
 var url = require('url');
 var trip = require('./Trip');
 var place = require('./place');
 require('./arrayExt');
-
-request.setMaxListeners(0);
 
 var winston = require('winston');
 var logger = new (winston.Logger)({
