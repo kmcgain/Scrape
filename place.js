@@ -1,6 +1,7 @@
 var request = require('request');
 var cheerio = require('cheerio');
 var deferred = require('deferred');
+var deferWork = require('./deferWork');
 var Review = require('./review').Review;
 var getReviewDetails = require('./review-get').getReviewDetails;
 var url = require('url');
@@ -19,22 +20,40 @@ var loadPlace = function(href, progressObj) {
 		exports.logger.verbose('Loading: ' + href);
 	}
 
+	if (href.match(/Daylesford/)) {
+		debugger;
+	}
+
 	var def =  deferred();
+
+	var hrefCopied = href;
 	
-	request(href, function(error, resp, body) {	
+	request({uri: href, followRedirect: true, maxRedirects: 20}, function(error, resp, body) {	
+		if (hrefCopied.match(/Daylesford/)) {
+			debugger;
+		}
 		if (error) {throw new Error(error);}
 		if (resp.statusCode != 200) {
 			throw new Error("We didn't get 200, we got " + resp.statusCode + " while loading " + href);
 		}
-		
+
 		var resolutionHandler = null;
 
 		var $ = cheerio.load(body);
+
+		//var redirectedUrl = resp.request.uri.href;
+		
 
 		var selecter = null;
 		if (href.match(/\/Tourism-/)) {
 			var viewHotels = $('#HSCS_SEE_ALL');
 
+			if (href == "http://www.tripadvisor.com.au/Tourism-g499623-Daylesford_Victoria-Vacations.html") {
+				debugger;
+			}
+			if (href == "http://www.tripadvisor.com.au/Tourism-g552127-Aireys_Inlet_Victoria-Vacations.html") {
+				debugger;
+			}
 			if (viewHotels.length == 0) {
 				// No hotels for this location
 				progressObj.IsComplete = true;
@@ -80,7 +99,7 @@ var loadPlace = function(href, progressObj) {
 			def.resolve();
 		})
 		.done();
-	}).setMaxListeners(0);	
+	});	
 
 	return def.promise;
 };
@@ -98,22 +117,23 @@ var processChild = function(href, progress, childProcessor) {
 
 	deferred.map(progress.GetChildren(), function(item){return item})
 	.then(function(children) {
-		var child = children.singleOrNone(function(elem) { elem.Url = absHref; });
+		//var child = children.singleOrNone(function(elem) { return elem.Url == absHref; });
 
-		if (child != null) {
+		/*if (child != null) {
 			if (child.IsComplete) {
-				def.resolve();				
+				def.resolve();	
+				return;			
 			}
 
 			var newProgress = child;
 		}
-		else {
+		else {*/
 			var newProgress = progress;
 			if (progress.Hotel == null) {			
-				newProgress = new trip.Progress(absHref);
+				newProgress = new trip.Progress(absHref, progress);
 				progress.AddChild(newProgress);
 			}
-		}
+		//}
 
 		if (childProcessor != null) {
 			childProcessor(absHref, newProgress)
@@ -131,6 +151,10 @@ var processChild = function(href, progress, childProcessor) {
 }
 
 var processHotel = function(href, progressObj, $) {
+	if (exports.logger) {
+		exports.logger.verbose('Process Hotel: ' + href + ' from prog: ' + progressObj.Url);
+	}
+
 	if (progressObj.Hotel == null) {
 		progressObj.Hotel = new Hotel(href.match(/Hotel_Review-(\w*-\w*)-Reviews/)[1]);
 	}

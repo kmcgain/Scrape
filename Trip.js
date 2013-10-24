@@ -24,14 +24,26 @@ var TripRegistry = function(tripRepository){
 	}
 };
 
-var Progress = function(href) {
+var Progress = function(href, parent) {
 	var self = this;
 	this.Url = href;
 	var children = [];
 	this.TripDoc_id = null;
 	this.IsRoot = false;
 	this.IsComplete = false;
+	this.Parent = parent;
 
+	this.PrintParents = function() {
+		console.log(printParentsAux(self));
+	}
+
+	var printParentsAux = function(prog) {
+		if (!prog) {
+			return "";
+		}
+
+		return prog.Url + ":::" + printParentsAux(prog.Parent);
+	}
 
 	this.AddChild = function(child) {
 		children.push(child);
