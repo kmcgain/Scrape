@@ -3,8 +3,8 @@ var promisify = deferred.promisify;
 
 var mongoose = require('mongoose');
 
-mongoose.connect('mongodb://admin:dx7XmV8Hx1Hb@127.9.111.2:27017');
-//mongoose.connect('mongodb://admin:dx7XmV8Hx1Hb@127.0.0.1:27018');
+//mongoose.connect('mongodb://admin:dx7XmV8Hx1Hb@127.9.111.2:27017');
+mongoose.connect('mongodb://admin:dx7XmV8Hx1Hb@127.0.0.1:27018');
 
 exports.repository = function() {
 	var def = new deferred();

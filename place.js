@@ -1,7 +1,9 @@
 var request = require('request');
 var cheerio = require('cheerio');
 var deferred = require('deferred');
-var deferWork = require('./deferWork');
+var defWorkLib = require('./deferWork');
+var deferWork = defWorkLib.deferWork;
+var mapSyncronously = defWorkLib.mapSyncronously;
 var Review = require('./review').Review;
 var getReviewDetails = require('./review-get').getReviewDetails;
 var url = require('url');
@@ -86,14 +88,11 @@ var loadPlace = function(href, progressObj) {
 			return;	
 		}
 
-		childPromises = [];
-		selecter.each(function(i, linkElem) {
-			childPromises.push(
-				processChild($(this).attr('href'), progressObj)
-			);
-		});
+		var childHrefs = selecter.map(function() {return $(this).attr('href');});
 
-		deferred.map(childPromises)
+		mapSyncronously(childHrefs, function(item) {
+			return processChild(item, progressObj);
+		})		
 		.then(function () {
 			progressObj.IsComplete = true;		
 			def.resolve();
@@ -117,9 +116,9 @@ var processChild = function(href, progress, childProcessor) {
 
 	deferred.map(progress.GetChildren(), function(item){return item})
 	.then(function(children) {
-		//var child = children.singleOrNone(function(elem) { return elem.Url == absHref; });
+		var child = children.singleOrNone(function(elem) { return elem.Url == absHref; });
 
-		/*if (child != null) {
+		if (child != null) {
 			if (child.IsComplete) {
 				def.resolve();	
 				return;			
@@ -127,13 +126,13 @@ var processChild = function(href, progress, childProcessor) {
 
 			var newProgress = child;
 		}
-		else {*/
+		else {
 			var newProgress = progress;
 			if (progress.Hotel == null) {			
 				newProgress = new trip.Progress(absHref, progress);
 				progress.AddChild(newProgress);
 			}
-		//}
+		}
 
 		if (childProcessor != null) {
 			childProcessor(absHref, newProgress)

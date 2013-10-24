@@ -1,5 +1,5 @@
 var deferred = require('deferred');
-var deferWork = require('./deferWork');
+var deferWork = require('./deferWork').deferWork;
 var promisify = deferred.promisify;
 
 var TripRegistry = function(tripRepository){
