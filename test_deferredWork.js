@@ -1,11 +1,13 @@
-var deferWork = require('./deferWork');
+
+var deferWorkLib = require('./deferWork');
+var deferWork = deferWorkLib.deferWork;
 var deferred = require('deferred');
 var assert = require('node-assertthat');
 
 var count = 0;
 
 var asyncAdd = function() {
-	return new deferred(1);
+	return deferred(1);
 }
 
 deferWork(function() {
@@ -20,3 +22,13 @@ deferWork(function() {
 	assert.that(count, is.equalTo(2));
 })
 .done();
+
+var runningCount = 0;
+deferWork([deferred(1), deferred(2)], function (resolution) {
+	runningCount += resolution;
+})
+.then(function(){
+	assert.that(runningCount, is.equalTo(3))
+})
+.done();
+

@@ -1,5 +1,7 @@
 var deferred = require('deferred');
+var deferWorkLib = require('./deferWork');
 var promisify = deferred.promisify;
+var tDeferred = deferWorkLib.trackedDeferred;
 
 var mongoose = require('mongoose');
 
@@ -7,7 +9,7 @@ var mongoose = require('mongoose');
 mongoose.connect('mongodb://admin:dx7XmV8Hx1Hb@127.0.0.1:27018');
 
 exports.repository = function() {
-	var def = new deferred();
+	var def = new tDeferred();
 
 	mongoose.connection.once('open', function () {
 		mongoose.modelExt = function(collection, schema) {

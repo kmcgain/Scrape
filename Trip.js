@@ -8,7 +8,7 @@ var TripRegistry = function(tripRepository){
 
 	this.Load = function(doc_id) {
 		if (doc_id in store) {
-			return new deferred(store[doc_id]);
+			return deferred(store[doc_id]);
 		}
 
 		return deferWork(function() {
@@ -32,6 +32,7 @@ var Progress = function(href, parent) {
 	this.IsRoot = false;
 	this.IsComplete = false;
 	this.Parent = parent;
+	this.NumberOfExpectedChildren = 0;
 
 	this.PrintParents = function() {
 		console.log(printParentsAux(self));
@@ -58,7 +59,7 @@ var Progress = function(href, parent) {
 	}
 
 	this.realise = function() {
-		return new deferred(self);
+		return deferred(self);
 	}
 
 	this.GetChildren = function() {
@@ -77,7 +78,7 @@ ProgressProxy.prototype = Object.create(Progress.prototype);
 
 ProgressProxy.prototype.realise = function() {
 	if (this.loadedProgress != null) {
-		return new deferred(this.loadedProgress);
+		return deferred(this.loadedProgress);
 	}
 
 	return deferWork(function() {
@@ -91,51 +92,6 @@ ProgressProxy.prototype.realise = function() {
 ProgressProxy.prototype.GetChild = function(index) {
 	return children[index].realise();
 }
-
-	// var self = this;
-	// this.TripDoc_id = childDoc_id;
-
-	// var url = null;
-	// var children = null;
-	// var isRoot = null;
-	// var IsComplete = null;
-	// var loadedProgress = null
-	// var registry = tripRegistry;
-
-	// var loadDoc = function() {
-	// 	return deferWork(function() {
-	// 		return registry.Load(childDoc_id);
-	// 	}, function(doc) {
-	// 		loadedProgress = lazyConvertDoc(doc, tripRegistry);	
-	// 		return doc;
-	// 	});
-	// };
-
-	// var toProxy = ["Url", "Children", "IsRoot", "IsComplete"];
-
-	// var proxiedGet = function(funcOnProg) {
-	// 	if (loadedProgress == null) {
-	// 		return deferWork(function() {
-	// 			return loadDoc();
-	// 		}, function() {
-	// 			return new deferred(funcOnProg(loadedProgress));				
-	// 		})
-	// 	}
-
-	// 	return new deferred(funcOnProg(loadedProgress));
-	// }
-
-	// toProxy.forEach(function (proxyName) {
-	// 	Object.defineProperty(self, proxyName, {
-	// 		get: function() {
-	// 			return proxiedGet(function(prog){return prog[proxyName]});
-	// 		},
-	// 		set: function(value) {
-	// 			loadProgress[proxyName] = value;
-	// 		},
-	// 	});
-	// });
-//}
 
 var lazyConvertDoc = function(doc, tripRegistry) {
 	var prog = new Progress(doc.Url);

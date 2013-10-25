@@ -2,6 +2,14 @@ var url = require('url');
 var trip = require('./Trip');
 var place = require('./place');
 require('./arrayExt');
+var deferWork = require('./deferWork');
+
+// var nodetime = require('nodetime');
+// nodetime.profile({
+//     accountKey: 'd1299ed3f939d927ff5c62e7b11e22f59eb46b4a', 
+//     appName: 'Node.js Application'
+//   });
+
 
 var winston = require('winston');
 var logger = new (winston.Logger)({
@@ -50,9 +58,10 @@ function rootDataFound(err, rootProgress) {
 	// Start from scratch
 	if (err || rootProgress == null || rootProgress.length == 0) {
 		//var allLocationsUrl = getUrl('/AllLocations-g1-Places-World.html');
-		var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
+		//var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
 		//var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
 	
+		var allLocationsUrl = getUrl('http://www.tripadvisor.com.au/Tourism-g552127-Aireys_Inlet_Victoria-Vacations.html');
 		downloadTracker = new trip.Progress(allLocationsUrl);
 		downloadTracker.IsRoot = true;
 	}
@@ -66,7 +75,12 @@ function rootDataFound(err, rootProgress) {
 		throw new Exception("Bad data");
 	}
 
-	place.load(downloadTracker.Url, downloadTracker);
+	var workDone = false;
+	place.load(downloadTracker.Url, downloadTracker)
+	.then(function (){
+		workDone = true;
+	})
+	.done();
 
 	console.log("Starting progress tracking");
 	function reportProgress(progress) {
@@ -77,8 +91,11 @@ function rootDataFound(err, rootProgress) {
 		.then(function(prog) {
 			console.log("Total progress: " + prog);
 
-			if (prog == 1.0) {				
+			if (workDone) {				
+				console.log('finishing');
 				tripDocumentManager.finish();
+				
+				deferWork.printUnresolved();
 				return;
 			}
 			

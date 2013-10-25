@@ -1,10 +1,13 @@
 var deferred = require('deferred');
-var deferWork = require('./deferWork').deferWork;
+var deferWorkLib = require('./deferWork');
+var trackedDeferred = deferWorkLib.trackedDeferred;
+var deferWork = deferWorkLib.deferWork;
 var promisify = deferred.promisify;
 var sprintf = require('util').format;
+var deferredMap = deferWorkLib.trackedMap;
 
 var pSave = function(doc) {
-	var def = new deferred();
+	var def = new trackedDeferred();
 
 	doc.save(function(err) {
 				if (err) {
@@ -25,7 +28,7 @@ exports.TripDocumentManager = function (tripRegistry, hotelRegistry, entities) {
 	this.finish = entities.closeRepository;
 
 	var createDocument = function(progress, idCallback) {
-		var def = new deferred();
+		var def = new trackedDeferred();
 
 		var doc = new entities.TripMongo();
 
@@ -60,15 +63,16 @@ exports.TripDocumentManager = function (tripRegistry, hotelRegistry, entities) {
 			doc.Children.push(child.TripDoc_id);				
 		})];
 
+		debugger;
 		if (progress.Hotel) {
 			promises.push(updateHotel(doc, progress.Hotel));
 		}
 
 		if (promises.length == 0) {
-			promises.push(new deferred(0));
+			promises.push(deferred(0));
 		}
 
-		return deferred.map(promises);
+		return deferredMap(promises);
 	}
 
 	var updateHotelDoc = function(doc, hotel) {
@@ -86,7 +90,7 @@ exports.TripDocumentManager = function (tripRegistry, hotelRegistry, entities) {
 		var hotelDoc = hotelRegistry.Load(hotel.Doc_id);
 		updateHotelDoc(hotelDoc, hotel);
 
-		return new deferred(0);
+		return deferred(0);
 	}
 
 	this.WriteData = function(progress) {
@@ -106,10 +110,10 @@ exports.TripDocumentManager = function (tripRegistry, hotelRegistry, entities) {
 		
 		if (progress.TripDoc_id == null) {
 			promises.push(createDocument(progress, function (id) {progress.TripDoc_id = id}));
-			return deferred.map(promises);
+			return deferredMap(promises);
 		}
 		
-		var docDef = new deferred();
+		var docDef = new trackedDeferred();
 
 		tripRegistry.Load(progress.TripDoc_id)
 		.then(function(doc) {
@@ -124,7 +128,7 @@ exports.TripDocumentManager = function (tripRegistry, hotelRegistry, entities) {
 
 		promises.push(docDef.promise);
 
-		return deferred.map(promises);
+		return deferredMap(promises);
 	}
 }
 

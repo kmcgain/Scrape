@@ -9,31 +9,26 @@ var getReviewDetails = require('./review-get').getReviewDetails;
 var url = require('url');
 var trip = require('./Trip');
 var Hotel = require('./hotel').Hotel;
+var tDeferred = defWorkLib.trackedDeferred;
+var tDefMap = defWorkLib.trackedMap;
 
 var promisify = deferred.promisify;
 
 var loadPlace = function(href, progressObj) {
 	// NOTE: This will prevent the change in data over time
 	if (progressObj.IsComplete) {
-		return new deferred(0);
+		return deferred(0);
 	}
 
 	if (exports.logger) {
 		exports.logger.verbose('Loading: ' + href);
 	}
 
-	if (href.match(/Daylesford/)) {
-		debugger;
-	}
-
-	var def =  deferred();
+	var def = new tDeferred();
 
 	var hrefCopied = href;
 	
 	request({uri: href, followRedirect: true, maxRedirects: 20}, function(error, resp, body) {	
-		if (hrefCopied.match(/Daylesford/)) {
-			debugger;
-		}
 		if (error) {throw new Error(error);}
 		if (resp.statusCode != 200) {
 			throw new Error("We didn't get 200, we got " + resp.statusCode + " while loading " + href);
@@ -50,33 +45,26 @@ var loadPlace = function(href, progressObj) {
 		if (href.match(/\/Tourism-/)) {
 			var viewHotels = $('#HSCS_SEE_ALL');
 
-			if (href == "http://www.tripadvisor.com.au/Tourism-g499623-Daylesford_Victoria-Vacations.html") {
-				debugger;
-			}
-			if (href == "http://www.tripadvisor.com.au/Tourism-g552127-Aireys_Inlet_Victoria-Vacations.html") {
-				debugger;
-			}
-			if (viewHotels.length == 0) {
+			selecter = viewHotels.length == 0 
+				? $('.lodging .summaryLink')
+				: viewHotels;			
+
+			if (selecter.length == 0) {
 				// No hotels for this location
 				progressObj.IsComplete = true;
 
 				def.resolve();
 				return;
 			}
-
-			selecter = viewHotels;					
 		}
-
-		if (href.match(/\/Hotels-/)) {			
+		else if (href.match(/\/Hotels-/)) {			
 			selecter = $('#ACCOM_OVERVIEW .listing .property_title');
 		}
-		
-		if (href.match(/\/AllLocations-/)) {
+		else if (href.match(/\/AllLocations-/)) {
 			selecter = $('#BODYCON table td a');				
 		}
-
 		// Special Case
-		if (href.match(/\/Hotel_Review/)) {	
+		else if (href.match(/\/Hotel_Review/)) {	
 			// TODO: make this align with the other cases so we can refactor.		
 			processChildHotel(progressObj, href, $)
 			.then(function () {
@@ -87,8 +75,14 @@ var loadPlace = function(href, progressObj) {
 
 			return;	
 		}
+		else {
+			console.log('Specifal Url: ' + href);
+		}
+
 
 		var childHrefs = selecter.map(function() {return $(this).attr('href');});
+
+		progressObj.NumberOfExpectedChildren = childHrefs.length;
 
 		mapSyncronously(childHrefs, function(item) {
 			return processChild(item, progressObj);
@@ -112,9 +106,9 @@ var processChildHotel = function(href, progress, $) {
 var processChild = function(href, progress, childProcessor) {
 	var absHref = getUrl(href);	
 
-	var def = new deferred();
+	var def = new tDeferred();
 
-	deferred.map(progress.GetChildren(), function(item){return item})
+	tDefMap(progress.GetChildren())
 	.then(function(children) {
 		var child = children.singleOrNone(function(elem) { return elem.Url == absHref; });
 
@@ -178,7 +172,7 @@ var processHotel = function(href, progressObj, $) {
 			return deferred(0);
 		}
 
-		return deferred.map(reviewPromises);
+		return tDefMap(reviewPromises);
 	}
 
 	progressObj.Hotel.Title = $('#HEADING').text().trim();
@@ -203,7 +197,7 @@ var processHotel = function(href, progressObj, $) {
 	}
 
 	return deferWork(function() {
-		return deferred.map(reviewPromises);
+		return tDefMap(reviewPromises);
 	}, function() {
 		console.log('The entire hotel has been completed at this point');
 		progressObj.Hotel.IsComplete = true;

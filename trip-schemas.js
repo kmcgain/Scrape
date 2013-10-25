@@ -1,7 +1,8 @@
 var deferred = require('deferred');
+var tDeferred = require('./deferWork').trackedDeferred;
 
 exports.Entities = function () {
-	var def = new deferred();
+	var def = new tDeferred();
 
 	var repositoryPromise = require('./repository.js').repository();
 	

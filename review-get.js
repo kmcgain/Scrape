@@ -1,15 +1,16 @@
 var deferred = require('deferred');
 var request = require('request');
 var cheerio = require('cheerio');
-var deferred = require('deferred');
+var deferWorkLib = require('./deferWork');
 var promisify = deferred.promisify;
+var tDeferred = deferWorkLib.trackedDeferred;
 
 exports.getReviewDetails = function(hotel, reviews) {
 	if (reviews.length == 0) {
 		return deferred(0);
 	}
 
-	var def = deferred();
+	var def = new tDeferred();
 
 	reviewIds = reviews.map(function(review) { return review.Id; })
 		.join(',');
