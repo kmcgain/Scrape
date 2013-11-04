@@ -1,0 +1,999 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"paren",
+				"parentId"
+			],
+			[
+				"progR",
+				"progressRegistry"
+			],
+			[
+				"prog",
+				"progressId"
+			],
+			[
+				"progr",
+				"progressId"
+			],
+			[
+				"child",
+				"childCompletions"
+			],
+			[
+				"pa",
+				"parentId"
+			],
+			[
+				"markA",
+				"markAsCompleteOnChildren"
+			],
+			[
+				"prg",
+				"progressId"
+			],
+			[
+				"pare",
+				"parentId"
+			],
+			[
+				"par",
+				"parent"
+			],
+			[
+				"addToC",
+				"addToCache"
+			],
+			[
+				"cac",
+				"cacheCB"
+			],
+			[
+				"chi",
+				"children"
+			],
+			[
+				"childO",
+				"childObj"
+			],
+			[
+				"ex",
+				"existingItem"
+			],
+			[
+				"progre",
+				"progressRegistry"
+			],
+			[
+				"filter",
+				"filterMember"
+			],
+			[
+				"proto",
+				"prototype"
+			],
+			[
+				"trip",
+				"tripDocumentManager"
+			],
+			[
+				"Prp",
+				"ProgressProxy"
+			],
+			[
+				"tripReg",
+				"TripRegistry"
+			],
+			[
+				"doc",
+				"doc_id"
+			],
+			[
+				"Number",
+				"NumberOfExpectedChildren"
+			],
+			[
+				"unres",
+				"unresolvedPromises"
+			],
+			[
+				"curr",
+				"currentUnfinalised"
+			],
+			[
+				"derf",
+				"deferWorkLib"
+			],
+			[
+				"trac",
+				"trackedReduce"
+			],
+			[
+				"track",
+				"trackedDeferred"
+			],
+			[
+				"defer",
+				"deferred"
+			],
+			[
+				"def",
+				"deferWorkLib"
+			],
+			[
+				"mapS",
+				"mapSync"
+			],
+			[
+				"redu",
+				"reduceChildren"
+			],
+			[
+				"load",
+				"loadedProgress"
+			],
+			[
+				"defe",
+				"deferred"
+			],
+			[
+				"Progre",
+				"ProgressProxy"
+			],
+			[
+				"hand",
+				"handledResult"
+			],
+			[
+				"pro",
+				"progressObj"
+			],
+			[
+				"progres",
+				"progressObj"
+			],
+			[
+				"proc",
+				"processChildHotel"
+			],
+			[
+				"resol",
+				"resolutionHandler"
+			],
+			[
+				"reso",
+				"resolutionHandler"
+			],
+			[
+				"tripDocu",
+				"tripDocumentManager"
+			],
+			[
+				"rev",
+				"reviewHref"
+			],
+			[
+				"pror",
+				"progressObj"
+			],
+			[
+				"revie",
+				"reviewIndex"
+			],
+			[
+				"hotel",
+				"hotelIdentifier"
+			],
+			[
+				"proC",
+				"processChild"
+			],
+			[
+				"ch",
+				"childHref"
+			],
+			[
+				"writ",
+				"writingData"
+			],
+			[
+				"Pro",
+				"Progress"
+			],
+			[
+				"chil",
+				"childDoc_id"
+			],
+			[
+				"update",
+				"updateDocData"
+			],
+			[
+				"write",
+				"writeDataAux"
+			],
+			[
+				"all",
+				"allLocationsUrl"
+			],
+			[
+				"progressOb",
+				"progressObjPass"
+			],
+			[
+				"touri",
+				"tourismHref"
+			],
+			[
+				"FastTrac",
+				"FastTrackBuild"
+			],
+			[
+				"sql",
+				"sqlexpress"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "app/scrape.js",
+			"settings":
+			{
+				"buffer_size": 5437,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "app/trip-schemas.js",
+			"settings":
+			{
+				"buffer_size": 1760,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "app/hotelRegistry.js",
+			"settings":
+			{
+				"buffer_size": 1358,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "app/place.js",
+			"settings":
+			{
+				"buffer_size": 6988,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "app/progressRegistry.js",
+			"settings":
+			{
+				"buffer_size": 6200,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "app/logging.js",
+			"settings":
+			{
+				"buffer_size": 337,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"contents": "Searching 22 files for \"debugger\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\place.js:\n  195  	progressRegistry.getHotel(href, progressId)\n  196  	.then(function(hotelId) {\n  197: 		debugger;\n  198  		var reviewPromises = [];\n  199  \n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n  105  	var ext = {\n  106  		isFinishedWriting: function() {\n  107: 			debugger;\n  108  			return cache.size() == 0;\n  109  		},\n  ...\n  114  			}, function(item) {\n  115  				unlock(id);\n  116: 				debugger;\n  117  				return item.IsComplete ? true : false; // return false on undefined\n  118  			});\n\nC:\\Source\\node\\trip\\app\\scrape.js:\n  158  \n  159  // function roughSizeOfObject( object ) {\n  160: // 	debugger;\n  161  //     var objectList = [];\n  162  //     var stack = [ object ];\n\n4 matches across 3 files\n\n\nSearching 22 files for \"debugger\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n  119  	var ext = {\n  120  		isFinishedWriting: function() {\n  121: 			debugger;\n  122  			return cache.size() == 0;\n  123  		},\n\nC:\\Source\\node\\trip\\app\\scrape.js:\n  153  \n  154  // function roughSizeOfObject( object ) {\n  155: // 	debugger;\n  156  //     var objectList = [];\n  157  //     var stack = [ object ];\n\n2 matches across 2 files\n",
+			"settings":
+			{
+				"buffer_size": 1249,
+				"line_ending": "Windows",
+				"name": "Find Results",
+				"scratch": true
+			}
+		},
+		{
+			"file": "app/trip-document-manager.js",
+			"settings":
+			{
+				"buffer_size": 3776,
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 58.0,
+		"selected_items":
+		[
+			[
+				"package",
+				"Preferences: Browse Packages"
+			],
+			[
+				"ssj",
+				"Set Syntax: JavaScript"
+			],
+			[
+				"ssr",
+				"Set Syntax: Ruby"
+			],
+			[
+				"Ruby",
+				"Set Syntax: Ruby"
+			]
+		],
+		"width": 416.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/C/Users/kym/AppData/Roaming/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/C/Source/node/trip/app/trip-schemas.js",
+		"/C/Source/node/trip/app/checkProgress.js",
+		"/C/Source/node/trip/app/repository.js",
+		"/C/Source/node/trip/performance/memory_registry.js",
+		"/C/Source/node/trip/app/trip-schemas-in-memory.js",
+		"/C/Source/node/trip/app/tripRegistry.js",
+		"/C/Source/node/trip/app/Trip.js",
+		"/C/Source/node/trip/tests/test_Trip.js",
+		"/C/Source/node/trip/app/logging.js",
+		"/C/Source/node/trip/app/place.js",
+		"/C/Source/node/trip/app/clear-db.js",
+		"/C/Source/node/trip/integration/test_findMongo.js",
+		"/C/Source/node/trip/app/deferWork.js",
+		"/C/Source/node/trip/tests/test_trip-document-manager.js",
+		"/C/Source/node/trip/app/trip-document-manager.js",
+		"/C/Source/node/trip/tests/test_cleanComplete.js",
+		"/C/Source/node/trip/tests/test_trip-registry.js",
+		"/C/Source/node/trip/app/review-get.js",
+		"/C/Source/node/trip/tests/test_review-get.js",
+		"/C/Source/node/trip/app/scrape.js",
+		"/C/Source/node/trip/tests/test_Review.js",
+		"/C/Source/node/trip/tests/test_progress-reporter.js",
+		"/C/Source/node/trip/tests/test_deferWorkTracked.js",
+		"/C/Source/node/trip/tests/test_docMapping.js",
+		"/C/Source/node/trip/tests/test_deferWorkSync.js",
+		"/C/Source/node/trip/tests/test_deferredWork.js",
+		"/C/Source/node/trip/tests/intern.js",
+		"/C/Source/node/trip/tests/trip.js",
+		"/C/Source/node/trip/trip-document-manager.js",
+		"/C/Source/node/trip/progress-reporter.js",
+		"/C/Source/node/trip/scrape.js",
+		"/C/Source/node/trip/review-get.js",
+		"/C/Source/node/trip/review.js",
+		"/C/Source/node/trip/mem.sh",
+		"/C/Source/node/trip/repository.js",
+		"/C/Source/node/trip/deferWork.js",
+		"/C/Source/node/trip/hotel.js",
+		"/C/Source/node/trip/place.js",
+		"/C/Source/node/trip/Trip.js",
+		"/C/Source/node/trip/tests/inter.js",
+		"/C/Source/node/trip/test_deferWorkTracked.js",
+		"/C/Source/node/trip/test_deferredWork.js",
+		"/C/Source/node/trip/test_Trip.js",
+		"/C/Source/node/trip/test_Review.js",
+		"/C/Source/node/trip/test_review-get.js",
+		"/C/Source/node/trip/test_trip-document-manager.js",
+		"/C/Source/node/trip/trip-schemas.js",
+		"/C/Source/node/trip/test_deferWorkSync.js",
+		"/C/Source/node/trip/DocLoader.js",
+		"/C/Source/node/trip/arrayExt.js",
+		"/C/Source/node/trip/test_progress-reporter.js",
+		"/C/Source/node/trip/clear-db.js",
+		"/C/Source/node/trip/deferrWork.js",
+		"/C/Source/node/trip/json2.js",
+		"/C/Source/node/trip/json2",
+		"/C/Source/node/trip/entity.js",
+		"/C/Source/node/trip/mongo.js",
+		"/C/Source/node/trip/string-extensions.js",
+		"/C/Source/node/trip/test_docMapping.js",
+		"/C/Source/node/trip/promisify_test.js",
+		"/C/Source/node/trip/package.json",
+		"/C/Users/kym/Documents/TFS/mock/edit-cost-centre.mock",
+		"/C/Users/kym/Documents/TFS/mock/edit-cost-centre-success.mock",
+		"/C/Users/kym/Documents/TFS/mock/bulk-transfer-pending.mock",
+		"/C/Users/kym/Documents/TFS/mock/bulk-transfer-single.mock",
+		"/C/Users/kym/Documents/EstimatesNew.txt",
+		"/C/Source/node/tripAdvisorScrape/scrape.js",
+		"/C/Users/kym/Downloads/T4Template/T4Template/WcfService/WcfService/CustomServiceReferenceGenerator.tt",
+		"/C/Source/WSDL/output.config",
+		"/C/Source/WsdlGenerator/.gitignore",
+		"/C/Source/WsdlGenerator/WsdlGenerator/WsdlGenerator.csproj",
+		"/C/Source/WsdlGenerator/CSGeneration/CSGeneration.csproj",
+		"/C/Source/ruby/tripAdvisorScraper/scrape.rb",
+		"/C/Users/kym/Dropbox/kym-ec2.pem",
+		"/C/Users/kym/Downloads/netframework.aspx",
+		"/C/Source/WSDL/WcfService.xsd",
+		"/C/Source/WSDL/schemas.microsoft.com.2003.10.Serialization.xsd",
+		"/C/Source/GRMS/FastTrack.Azure/ServiceConfiguration.cscfg",
+		"/C/Users/kym/Dropbox/grvgit/.bashrc",
+		"/C/Source/SqlAzureBackup/BasicDbBackup/BasicDbBackup/bin/Debug/tableProgress.log",
+		"/C/Source/SqlAzureBackup/BasicDbBackup/BasicDbBackup/bin/Debug/misc.log",
+		"/C/Source/SqlAzureBackup/BasicDbBackup/BasicDbBackup/bin/Debug/out.bacpac",
+		"/C/Users/kym/Dropbox/hotkey/CapsHomeEnd.ahk",
+		"/C/Source/GRMS/FastTrackAcceptance/tools/setupEnvironment.sh",
+		"/C/Source/GRMS/azuredeploy/azuredeploy.msbuild",
+		"/C/Source/postToJenkins.rb",
+		"/C/Source/GRMS/FormGuide/Reports/StakemoneyDetailedReport.rdl",
+		"/C/Users/kym/Downloads/rootkey.csv",
+		"/C/Source/GRMSSecond/azuredeploy/azuredeploy.msbuild",
+		"/C/Source/GRMS/azuredeploy/deploy.ps1",
+		"/C/Source/FastTrack-Production-Deploy/DevOps/DeployCloudInstance/deploy.ps1",
+		"/C/Source/FastTrack-Production-Deploy/azuredeploy/azuredeploy.msbuild",
+		"/C/Users/kym/Dropbox/hotkey/ReplaceEsc.ahk",
+		"/C/Source/FastTrack-Production-Deploy/Automation/automatedrestore.sh",
+		"/C/Source/FastTrack-Production-Deploy/DevOps/backup/renameWithOverride.sh",
+		"/C/Source/DevOps/DatabaseQueries/primeUnconsumed.sql",
+		"/C/Source/DevOps/DatabaseQueries/insertEvent.sh",
+		"/C/Source/FastTrack-Production-Deploy/DevOps/backup/renamedb.sql",
+		"/C/Source/FastTrack-Production-Deploy/DevOps/backup/dropDb.sql",
+		"/C/Source/GRMS/FastTrackAcceptance/tools/configureFTSettings.msbuild",
+		"/C/Source/GRMS/FastTrackAcceptance/tools/deleteIndex.ps1",
+		"/C/Source/GRMS/tools/stopemulator.sh",
+		"/C/Source/DevOps/DeployCloudInstance/deploy.ps1",
+		"/C/Source/NDR/tools/clearNDRData.ps1",
+		"/C/Source/GRMS/tools/emulatordeploy.sh",
+		"/C/Source/NDR/tools/runNdr.sh",
+		"/C/Source/GRMS/tools/localtest.sh",
+		"/C/Source/NDR/NDR.Azure/ServiceDefinition.csdef",
+		"/C/Source/NDR/NDR.Azure/ServiceConfiguration.Cloud.cscfg",
+		"/C/Source/NDR/azuredeploy/azuredeploy.msbuild",
+		"/C/Source/NDR/NDR.Azure/ServiceDefinition.build.csdef",
+		"/C/Source/test.html",
+		"/C/Source/GRMS/FastTrack.Web/Web.config",
+		"/C/Source/GRMS/.gitignore",
+		"/C/Source/NDR/tools/resetemulator.sh",
+		"/C/Source/GRMS/BackwardsCompatibility/BackwardsCompatibility/App.config",
+		"/C/Source/GRMS/tools/resetemulator.sh",
+		"/C/Source/GRMS/NDRClient/NDRApplicationLayer/packages/repositories.config",
+		"/C/Source/GRMS/NDRClient/NDRApplicationLayer/NDRApplicationLayer.Specifications/packages.config",
+		"/C/Source/GRMS/BackwardsCompatibility/packages/repositories.config",
+		"/C/Source/NDR/azuredeploy/deploy.ps1",
+		"/C/Source/GRMS/azuredeploy/fasttrackintegration-ci.msbuild",
+		"/C/Source/GRMS/azuredeploy/fasttrackintegration-ci .msbuild",
+		"/C/Source/GRMS/tools/integrateFtNdr.sh",
+		"/C/Source/SaturdayPlan",
+		"/C/Source/GRMS/azuredeploy/fasttrack-ci.msbuild",
+		"/C/Source/GRMS/FastTrack.Migrations/deployment/configureConnectionString.msbuild"
+	],
+	"find":
+	{
+		"height": 34.0
+	},
+	"find_in_files":
+	{
+		"height": 90.0,
+		"where_history":
+		[
+			"C:\\Source\\node\\trip\\app",
+			"",
+			"C:\\Source\\node\\trip",
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+			"tripDoc",
+			"debugger",
+			"setModi",
+			"(\\w*)\\.isModified = true",
+			"(.*)\\.isModified = true",
+			"isModified = true",
+			"isModified =",
+			"isModified",
+			"isModifed =",
+			"isModified",
+			"loadItem",
+			"debugger",
+			"isF",
+			"deferr",
+			"isComplet",
+			"debugger",
+			"processHotel",
+			"newProgre",
+			"setNumberOfExp",
+			"getChildren",
+			"mark",
+			"items",
+			"Worker item",
+			"progressRegistry",
+			"tripRegistry",
+			"loadItem",
+			"load",
+			"debu",
+			"newProgr",
+			"TripMongo",
+			"isComplete",
+			"));",
+			"progressRegistry",
+			"setNumber",
+			"Mark",
+			"IsComplete",
+			"progressReg",
+			"progress",
+			"new",
+			"deferr",
+			"TripMong",
+			"debugger",
+			"$",
+			"repository",
+			"childDoc_id",
+			"registry",
+			"updateHotel",
+			"createHotelDo",
+			"deferred\\(\\)",
+			"tDeferred",
+			"tDefMap",
+			"new deferred",
+			"new deferred\\(",
+			"deferred\\(",
+			"reduce",
+			"deferred",
+			"map",
+			"tDefMa",
+			"tDefMap",
+			"map",
+			"deferWork",
+			"deferr",
+			"new deferred\\(\\)",
+			"new deferred()",
+			"Store",
+			"processHotel",
+			"process hotel",
+			"progressRep",
+			"unwrap",
+			"deferWork",
+			"childProm",
+			"deferWOrk",
+			"href",
+			"request",
+			"new trip.Pro",
+			"new Pro",
+			"loadPlace",
+			"request",
+			"processHotel",
+			"processChildHotel",
+			"processHotel",
+			"entire hotel",
+			"new deferred\\(\\)",
+			"new deferred()",
+			"no reviews",
+			"resolving",
+			"Load",
+			"deferred.map",
+			"then",
+			"WriteDat",
+			"updateDocData",
+			"registry",
+			"lazyConvertDoc",
+			"ProgressProxy",
+			"Loading",
+			"cons",
+			"console.l",
+			"console.",
+			"console",
+			"doc",
+			"();\n",
+			"save",
+			"resolve",
+			"then",
+			"save",
+			"promisif",
+			"href",
+			"createDoc",
+			"debugger",
+			"tripEntit",
+			"mongoose",
+			"Title",
+			"trim",
+			"\\.Hotel",
+			"hotel",
+			"url",
+			"getUrl",
+			"appStart",
+			"hotel",
+			"processHote",
+			"hotel",
+			"());\n",
+			"deferred\\(",
+			"getUrl",
+			"$",
+			"cheerio",
+			"proce",
+			"loadPage"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": true,
+		"replace_history":
+		[
+			"setModified(\\1)",
+			"trackedDeferred",
+			"deferredMap",
+			"IsComplete",
+			",\\n",
+			"\\n",
+			"\\1\\2\\3",
+			"DECLARE @\\1 nvarchar(250) = '\\2'\\n",
+			"DECLARE @\\1 nvarchar(250) = '\\2'",
+			"{\"\\1\", \"\\2\"},",
+			"(\\5, \\2, \\3, \\4, \\1)",
+			".Grade.Field",
+			"getRacePoolAllocation(\\1, \\3, AllocationGrade.Field, null, \\2),",
+			"\\1,",
+			"/"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "app/scrape.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5437,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2043,
+								2043
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 939.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "app/trip-schemas.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1760,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1662,
+								1662
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 624.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "app/hotelRegistry.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1358,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1339,
+								1339
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 68.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "app/place.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6988,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4958,
+								4958
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2987.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "app/progressRegistry.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6200,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2969,
+								2969
+							]
+						],
+						"settings":
+						{
+							"auto_name": "",
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 2088.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "app/logging.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 337,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								337,
+								337
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1249,
+						"regions":
+						{
+							"match":
+							{
+								"flags": 112,
+								"regions":
+								[
+									[
+										188,
+										196
+									],
+									[
+										357,
+										365
+									],
+									[
+										485,
+										493
+									],
+									[
+										692,
+										700
+									],
+									[
+										978,
+										986
+									],
+									[
+										1140,
+										1148
+									]
+								],
+								"scope": ""
+							}
+						},
+						"selection":
+						[
+							[
+								981,
+								981
+							]
+						],
+						"settings":
+						{
+							"detect_indentation": false,
+							"line_numbers": false,
+							"output_tag": 2,
+							"result_base_dir": "",
+							"result_file_regex": "^([A-Za-z\\\\/<].*):$",
+							"result_line_regex": "^ +([0-9]+):",
+							"scroll_past_end": true,
+							"syntax": "Packages/Default/Find Results.hidden-tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 558.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "app/trip-document-manager.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3776,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								704,
+								710
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 26.0
+	},
+	"input":
+	{
+		"height": 34.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"project": "trip.sublime-project",
+	"replace":
+	{
+		"height": 62.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 150.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

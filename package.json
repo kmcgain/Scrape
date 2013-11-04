@@ -11,24 +11,32 @@
   "author": {
     "name": "OpenShift",
     "email": "ramr@example.org",
-    "url":  "http://www.openshift.com/"
+    "url": "http://www.openshift.com/"
   },
   "homepage": "http://www.openshift.com/",
   "repository": {
     "type": "git",
     "url": "https://gitub.com/openshift/origin-server"
   },
-
   "engines": {
     "node": ">= 0.6.0",
     "npm": ">= 1.0.0"
   },
-
   "dependencies": {
+    "nodetime": "0.8.x",
+    "node-uuid": "1.4.x",
+    "proxyquire": "0.5.x",
+    "cheerio": "0.12.x",
+    "deferred": "0.6.x",
+    "node-assertthat": "0.0.x",
+    "mongoose": "3.6.x",
+    "request": "2.27.x",
+    "winston": "0.7.x"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "intern": "~1.2.1"
+  },
   "bundleDependencies": [],
-
   "private": true,
   "main": "server.js"
 }
