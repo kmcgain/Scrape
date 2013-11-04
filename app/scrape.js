@@ -5,7 +5,12 @@ require('./arrayExt');
 var deferWork = require('./deferWork');
 var TripRegistry = require('./tripRegistry');
 var async = require('async');
+try {
+	var heapdump = require('heapdump');
+}
+catch (e) {
 
+}
 // var nodetime = require('nodetime');
 // nodetime.profile({
 //     accountKey: 'd1299ed3f939d927ff5c62e7b11e22f59eb46b4a', 
@@ -67,6 +72,7 @@ function appStart(tripEntities, progressRegistry) {
 	.done();
 }
 
+var checkCount = 1;
 function checkForCompletion(entities, rootId, progressRegistry) {
 	progressRegistry.isComplete(rootId, {noCache: true})
 	.then(function(isComplete) {
@@ -74,6 +80,10 @@ function checkForCompletion(entities, rootId, progressRegistry) {
 	})
 	.done(function(isAllWorkDone) {
 		logger.verbose('number of items in cache: ' + progressRegistry.cacheSize());
+
+		if (checkCount++ % 600 == 0 && heapdump) {
+			heapdump.writeSnapshot('/var/local/' + Date.now() + '.heapsnapshot');
+		}
 
 		if (!isAllWorkDone) {
 			setTimeout(checkForCompletion, 1000, entities, rootId, progressRegistry);
