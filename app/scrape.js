@@ -20,6 +20,29 @@ catch (e) {
 var logger = require('./logging');
 
 place.logger = logger;
+place.loadTracker = new function loadTracker() {
+	var pageCount = 0;
+
+	var startTime = null;
+
+	return {
+		newPageLoad: function() {
+			if (pageCount == 0) {
+				startTime = process.hrtime();
+			}
+			pageCount++;
+		},
+
+		currentRate: function() {
+			if (pageCount == 0 || startTime == null) {
+				return 0;
+			}
+
+			var elapsedSecs = process.hrtime(startTime)[1] / 1000000000.0;
+			return pageCount / elapsedSecs;
+		}
+	};
+};
 
 var isExiting = false;
 
@@ -82,7 +105,7 @@ function checkForCompletion(entities, rootId, progressRegistry) {
 	})
 	.done(function(isAllWorkDone) {
 		logger.verbose('number of items in cache: ' + progressRegistry.cacheSize());
-
+		logger.verbose('Load rate: ' + place.loadTracker.currentRate() + ' per second');
 		// if (checkCount++ % 60 == 0 && heapdump) {
 		// 	console.log('writing heap');
 		// 	heapdump.writeSnapshot('/var/local/heapdumps/' + Date.now() + '.heapsnapshot');

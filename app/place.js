@@ -17,7 +17,7 @@ var promisify = deferred.promisify;
 
 var $ = null;
 
-var loadPlace = function(href, progressId) {	
+var loadPlace = function(href, progressId) {		
 	var def = deferred();
 	// NOTE: This will prevent the change in data over time
 	progressRegistry.isComplete(progressId)
@@ -65,6 +65,7 @@ var closeOverLoadResponse = function(href, progressId, def, childProcessor) {
 		});
 
 		resp.on('end', function() {
+			exports.loadTracker.newPageLoad();
 			var body = respParts.join('');
 			var resolutionHandler = null;
 
@@ -281,6 +282,7 @@ function isHotelLandingPage(href) {
 	return isHotelLandingPage;
 }
 
+exports.loadTrack = null;
 exports.load = loadPlace;
 exports.logger = null;
 exports.workerQueue = null;

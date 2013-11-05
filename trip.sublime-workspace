@@ -4,6 +4,18 @@
 		"selected_items":
 		[
 			[
+				"cac",
+				"cacheDropTimeoutPeriodInMs"
+			],
+			[
+				"cach",
+				"cacheCB"
+			],
+			[
+				"par",
+				"parentId"
+			],
+			[
 				"paren",
 				"parentId"
 			],
@@ -40,16 +52,8 @@
 				"parentId"
 			],
 			[
-				"par",
-				"parent"
-			],
-			[
 				"addToC",
 				"addToCache"
-			],
-			[
-				"cac",
-				"cacheCB"
 			],
 			[
 				"chi",
@@ -240,18 +244,32 @@
 	"buffers":
 	[
 		{
+			"contents": "var url = require('url');\nvar trip = require('./Trip');\nvar place = require('./place');\nrequire('./arrayExt');\nvar deferWork = require('./deferWork');\nvar TripRegistry = require('./tripRegistry');\nvar async = require('async');\ntry {\n	var heapdump = require('heapdump');\n}\ncatch (e) {\n\n}\n// var nodetime = require('nodetime');\n// nodetime.profile({\n//     accountKey: 'd1299ed3f939d927ff5c62e7b11e22f59eb46b4a', \n//     appName: 'Node.js Application'\n//   });\n\nvar logger = require('./logging');\n\nplace.logger = logger;\n\nvar isExiting = false;\n\nvar workerQueue = async.queue(function(task, callback) {	\n	if (isExiting) {\n		return;\n	}\n\n	callback(null, task);\n}, 100);\nplace.workerQueue = workerQueue;\n\n\n//require('./trip-schemas-in-memory').Entities()\nrequire('./trip-schemas').Entities()\n.then(function (schemas) {	\n	var tripEntities = schemas;\n\n	var tripRegistry = new TripRegistry(tripEntities.TripMongo);\n	var hotelRegistry = new TripRegistry(tripEntities.HotelMongo);\n\n	var hotelRegistry = require('./hotelRegistry')(tripEntities.HotelMongo);\n	var progressRegistry = require('./progressRegistry')(tripEntities.TripMongo, hotelRegistry);\n	place.setProgressRegistry(progressRegistry);\n\n	appStart(tripEntities, progressRegistry);\n})\n.done();\n\n\n\nfunction getUrl(relHref) {\n	return url.resolve('http://www.tripadvisor.com.au', relHref);\n}\n\nfunction appStart(tripEntities, progressRegistry) {\n	console.log(\"Loading places\");\n	//var allLocationsUrl = getUrl('/AllLocations-g1-Places-World.html');\n	var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');\n	//var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');\n\n	//var allLocationsUrl = getUrl('http://www.tripadvisor.com.au/Tourism-g552127-Aireys_Inlet_Victoria-Vacations.html');\n\n	logger.verbose('starting');\n	progressRegistry.getRoot(allLocationsUrl)\n	.then(function(rootData) {\n		checkForCompletion(tripEntities, rootData.id, progressRegistry);\n		return place.load(rootData.href, rootData.id)		\n	})\n	\n	.done();\n}\n\nvar checkCount = 1;\nfunction checkForCompletion(entities, rootId, progressRegistry) {\n	progressRegistry.isComplete(rootId, {noCache: true})\n	.then(function(isComplete) {\n		return isComplete && progressRegistry.isFinishedWriting();\n	})\n	.done(function(isAllWorkDone) {\n		logger.verbose('number of items in cache: ' + progressRegistry.cacheSize());\n\n		if (checkCount++ % 600 == 0 && heapdump) {\n			heapdump.writeSnapshot('/var/local/' + Date.now() + '.heapsnapshot');\n		}\n\n		if (!isAllWorkDone) {\n			setTimeout(checkForCompletion, 1000, entities, rootId, progressRegistry);\n			return;\n		}	\n\n		appShutdown(entities);	\n	});	\n}\n\nfunction appShutdown(entities) {\n	logger.verbose('closing repository');\n	entities.closeRepository(function() {\n		console.log('finished closing repository');\n	});\n}\n\n\n// function rootDataFound(err, rootProgress) {\n// 	// Start from scratch\n// 	if (err || rootProgress == null || rootProgress.length == 0) {\n		\n// 		downloadTracker = new trip.Progress(allLocationsUrl);\n// 		downloadTracker.IsRoot = true;\n// 	}\n// 	// Found root\n// 	else if (rootProgress.length == 1) {\n// 		var doc = rootProgress[0];\n// 		tripDocumentManager.tripRegistry.Store(doc);\n// 		downloadTracker = trip.lazyConvertDoc(doc, tripDocumentManager.tripRegistry);\n// 	}\n// 	else {\n// 		throw new Exception(\"Bad data\");\n// 	}\n\n// 	place.load(downloadTracker.Url, downloadTracker.TripDoc_id)\n// 	.done();\n\n// 	console.log(\"Starting progress tracking\");\n// 	function reportProgress(progress) {\n// 		//tripDocumentManager.WriteData(progress)\n// 		deferWork.trackedDeferred(0)\n// 		.then(function() {\n// 			return progressReporter(progress);\n// 		})\n// 		.then(function(prog) {\n// 			console.log(\"Total progress: \" + prog);\n// 			console.log(\"Outstanding queue items: \" + workerQueue.length());\n\n// 			var workDone = false; // TODO implement completion\n// 			if (workDone) {				\n// 				console.log('finishing');\n// 				tripDocumentManager.finish();\n				\n// 				// An attempt to discover why the program never ends. Reenable to discover unresolved promises.\n// 				//deferWork.printUnresolved();\n// 				return;\n// 			}\n			\n// 			setTimeout(reportProgress, 10000, progress);			\n// 		})\n// 		.done();\n\n// 		console.log('Trip Reg count: ' + tripDocumentManager.tripRegistry.NumberStored());\n// 		console.log('Hotel Reg count: ' + tripDocumentManager.hotelRegistry.NumberStored());		\n// 	}\n\n// 	//reportProgress(downloadTracker);\n\n// }\n\nfunction handleExit() {\n	isExiting = true;\n	// if (tripDocumentManager.WritingData) {\n	// 	process.nextTick(handleExit);\n	// 	return;\n	// }\n	if (!progressRegistry.isFinishedWriting()) {\n		process.nextTick(handleExit);\n		return;\n	}\n\n	process.exit(0);\n};\n\nprocess.on('SIGINT', handleExit);\nprocess.on('SIGTERM', handleExit);\n\n\n// function roughSizeOfObject( object ) {\n// 	debugger;\n//     var objectList = [];\n//     var stack = [ object ];\n//     var bytes = 0;\n\n//     while ( stack.length ) {\n//         var value = stack.pop();\n\n//         if ( typeof value === 'boolean' ) {\n//             bytes += 4;\n//         }\n//         else if ( typeof value === 'string' ) {\n//             bytes += value.length * 2;\n//         }\n//         else if ( typeof value === 'number' ) {\n//             bytes += 8;\n//         }\n//         else if\n//         (\n//             typeof value === 'object'\n//             && objectList.indexOf( value ) === -1\n//         )\n//         {\n//             objectList.push( value );\n\n//             for( i in value ) {\n//                 stack.push( value[ i ] );\n//             }\n//         }\n//     }\n//     return bytes;\n// }",
 			"file": "app/scrape.js",
+			"file_size": 5796,
+			"file_write_time": 130280208020424292,
 			"settings":
 			{
-				"buffer_size": 5437,
+				"buffer_size": 5591,
 				"line_ending": "Windows"
 			}
 		},
 		{
+			"contents": "var deferred = require('deferred');\nvar tDeferred = require('./deferWork').trackedDeferred;\n\nexports.Entities = function () {\n	var def = new tDeferred();\n\n	var repositoryPromise = require('./repository.js').repository();\n	\n	repositoryPromise.then(function (repository) {\n		var tripSchema = new repository.Schema({\n			Children: [repository.Schema.ObjectId],\n			Url: String,\n			IsRoot: Boolean,\n			IsComplete: Boolean,	\n			Hotel: repository.Schema.ObjectId,\n			NumberOfExpectedChildren: Number,\n			ParentId: repository.Schema.ObjectId,\n		});\n\n		var hotelSchema = new repository.Schema({\n			Id: String,\n			Title: String,\n			LocationId: String,\n			Reviews: [repository.Schema.Types.Mixed],\n		});\n\n		var tripMongo = repository.modelExt('Trip', tripSchema);\n		var hotelMongo = repository.modelExt('Hotel', hotelSchema);\n\n		tripMongo.mapReduce = function(mapF, reduceF) {\n			var mapDef = deferred();\n\n			repository.connection.db.executeDbCommand({\n				mapreduce: 'trips',\n				map: mapF.toString(),\n				reduce: reduceF.toString(),\n				out: 'tripsMR', // TODO: allow custom name to avoid conflict\n			}, function(err, result) {\n				if (err) {\n					throw new Error(err);\n				}\n\n				result.documents.forEach(function(doc) {\n					if (!doc.ok) {\n						throw new Error(doc);\n					}	\n				})\n\n				repository.connection.db.collection('tripsMR', function(err, tripsMR) {\n					tripsMR.find({}).toArray(function(err, items) {\n						mapDef.resolve(items[0].value);\n					});\n				});\n				\n			});\n\n			return mapDef.promise;\n		};\n\n		console.log('repository loaded');\n		def.resolve({TripMongo: tripMongo, HotelMongo: hotelMongo, closeRepository: function (cb) {\n			repository.connection.db.close(cb);\n		}});\n	})\n	.done();\n\n	console.log('Promising to load the repository');\n	return def.promise;\n};",
 			"file": "app/trip-schemas.js",
+			"file_size": 1828,
+			"file_write_time": 130276660882810905,
 			"settings":
 			{
-				"buffer_size": 1760,
+				"buffer_size": 1769,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "app/trip-schemas-in-memory.js",
+			"settings":
+			{
+				"buffer_size": 1327,
 				"line_ending": "Windows"
 			}
 		},
@@ -267,7 +285,7 @@
 			"file": "app/place.js",
 			"settings":
 			{
-				"buffer_size": 6988,
+				"buffer_size": 7204,
 				"line_ending": "Windows"
 			}
 		},
@@ -275,7 +293,7 @@
 			"file": "app/progressRegistry.js",
 			"settings":
 			{
-				"buffer_size": 6200,
+				"buffer_size": 6932,
 				"line_ending": "Windows"
 			}
 		},
@@ -288,13 +306,21 @@
 			}
 		},
 		{
-			"contents": "Searching 22 files for \"debugger\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\place.js:\n  195  	progressRegistry.getHotel(href, progressId)\n  196  	.then(function(hotelId) {\n  197: 		debugger;\n  198  		var reviewPromises = [];\n  199  \n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n  105  	var ext = {\n  106  		isFinishedWriting: function() {\n  107: 			debugger;\n  108  			return cache.size() == 0;\n  109  		},\n  ...\n  114  			}, function(item) {\n  115  				unlock(id);\n  116: 				debugger;\n  117  				return item.IsComplete ? true : false; // return false on undefined\n  118  			});\n\nC:\\Source\\node\\trip\\app\\scrape.js:\n  158  \n  159  // function roughSizeOfObject( object ) {\n  160: // 	debugger;\n  161  //     var objectList = [];\n  162  //     var stack = [ object ];\n\n4 matches across 3 files\n\n\nSearching 22 files for \"debugger\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n  119  	var ext = {\n  120  		isFinishedWriting: function() {\n  121: 			debugger;\n  122  			return cache.size() == 0;\n  123  		},\n\nC:\\Source\\node\\trip\\app\\scrape.js:\n  153  \n  154  // function roughSizeOfObject( object ) {\n  155: // 	debugger;\n  156  //     var objectList = [];\n  157  //     var stack = [ object ];\n\n2 matches across 2 files\n",
+			"contents": "Searching 22 files for \"debugger\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\place.js:\n  195  	progressRegistry.getHotel(href, progressId)\n  196  	.then(function(hotelId) {\n  197: 		debugger;\n  198  		var reviewPromises = [];\n  199  \n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n  105  	var ext = {\n  106  		isFinishedWriting: function() {\n  107: 			debugger;\n  108  			return cache.size() == 0;\n  109  		},\n  ...\n  114  			}, function(item) {\n  115  				unlock(id);\n  116: 				debugger;\n  117  				return item.IsComplete ? true : false; // return false on undefined\n  118  			});\n\nC:\\Source\\node\\trip\\app\\scrape.js:\n  158  \n  159  // function roughSizeOfObject( object ) {\n  160: // 	debugger;\n  161  //     var objectList = [];\n  162  //     var stack = [ object ];\n\n4 matches across 3 files\n\n\nSearching 22 files for \"debugger\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n  119  	var ext = {\n  120  		isFinishedWriting: function() {\n  121: 			debugger;\n  122  			return cache.size() == 0;\n  123  		},\n\nC:\\Source\\node\\trip\\app\\scrape.js:\n  153  \n  154  // function roughSizeOfObject( object ) {\n  155: // 	debugger;\n  156  //     var objectList = [];\n  157  //     var stack = [ object ];\n\n2 matches across 2 files\n\n\nSearching 22 files for \"newProgress\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\place.js:\n  154  				}\n  155  \n  156: 				var newProgressPromise = deferred(child);\n  157  			}\n  158  			else {\n  159: 				var newProgressPromise = progressRegistry.newProgress(absHref, progressId);			\n  160  			}\n  161  \n  162: 			newProgressPromise\n  163: 			.then(function(newProgress) {		\n  164  				if (childProcessor != null) {\n  165: 					childProcessor(absHref, newProgress)\n  166  					.then(def.resolve)\n  167  					.done();\n  168  				}\n  169  \n  170: 				loadPlace(absHref, newProgress)\n  171  				.then(def.resolve)\n  172  				.done();\n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n  148  		},\n  149  \n  150: 		newProgress: function(href, parentId) {\n  151  			return deferWork(function() {\n  152  				return loadItem(parentId);\n  153  			}, function(parent) {\n  154: 				var newProgress = new tripRepository();\n  155: 				newProgress.Url = href;\n  156: 				setModified(newProgress);\n  157: 				newProgress.Children = [];\n  158: 				newProgress.ParentId = parentId;\n  159  \n  160: 				parent.Children.push(newProgress._id);\n  161  				setModified(parent);\n  162  \n  163: 				addToCache(newProgress.id, newProgress);\n  164  \n  165  				unlock(parentId);\n  166  \n  167: 				return newProgress._id;\n  168  			});\n  169  		},\n\n17 matches across 2 files\n\n\nSearching 22 files for \"findById\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n   30  		return deferWork(function() {\n   31  			var def = deferred();\n   32: 			tripRepository.findById(id, function(err, result){\n   33  				if (result == null) {\n   34  					throw new Error('Cannot load item because it is not cached or persisted: ' + id);\n\nC:\\Source\\node\\trip\\app\\trip-schemas-in-memory.js:\n   20  	return {\n   21  		find: function(filter, cb){cb(null, db.filter(objToArrayFilter(filter)));},\n   22: 		findById: function(id, cb){\n   23  			debugger;\n   24  			cb(null, db.filter(function filter(item){ return item._id == id})[0])},\n\nC:\\Source\\node\\trip\\app\\tripRegistry.js:\n   12  		var def = new deferred();\n   13  		\n   14: 		tRepository.findById(doc_id, function(err, doc) {\n   15  			if (doc == null) {\n   16  				throw new Error(\"Couldn't find the document for doc_id: \" + doc_id);\n\n3 matches across 3 files\n\n\nSearching 22 files for \"isComplete\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\place.js:\n   19  	var def = deferred();\n   20  	// NOTE: This will prevent the change in data over time\n   21: 	progressRegistry.isComplete(progressId)\n   22: 	.then(function(isComplete) {\n   23: 		if (isComplete) {\n   24  			return def.resolve();\n   25  		}\n   ..\n  149  \n  150  			if (child != null) {				\n  151: 				if (progressRegistry.isComplete(child)) {\n  152  					def.resolve();	\n  153  					return;			\n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n   97  		.then(function(childIds) {			\n   98  			deferred.map(childIds.map(function(childId) {\n   99: 				return ext.isComplete(childId);\n  100  			}))\n  101  			.then(function(childCompletions) {\n  ...\n  156  		},\n  157  \n  158: 		isComplete: function(id) {\n  159  			return deferWork(function() {\n  160  				return loadItem(id);\n\nC:\\Source\\node\\trip\\app\\scrape.js:\n   69  \n   70  function checkForCompletion(entities, rootId, progressRegistry) {\n   71: 	progressRegistry.isComplete(rootId)\n   72: 	.then(function(isComplete) {\n   73: 		if (!isComplete) {\n   74  			return false;\n   75  		}\n\n9 matches across 3 files\n\n\nSearching 22 files for \"removing\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n   52  	var cacheCB = function(item) {\n   53  		return function(id) {\n   54: 			console.log('removing from cache: ' + id);\n   55  			// We have dropped the cache item\n   56  			var aLockExists = locks.indexOf(id) != -1;\n   ..\n   79  \n   80  			cache.del(id);\n   81: 			logger.verbose('No modification so removing from cache: ' + id + ', now size is: ' + cache.size());		\n   82  		};\n   83  	}\n\nC:\\Source\\node\\trip\\app\\repository.js:\n   18  			md.drop = function() {\n   19  				collection = convertToMongoCollectionName(collection);\n   20: 				console.log('removing ' + collection);\n   21  				mongoose.connection.db.dropCollection(collection, function (){});\n   22  			};\n\n3 matches across 2 files\n\n\nSearching 22 files for \"removing from c\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n   52  	var cacheCB = function(item) {\n   53  		return function(id) {\n   54: 			console.log('removing from cache: ' + id);\n   55  			// We have dropped the cache item\n   56  			var aLockExists = locks.indexOf(id) != -1;\n   ..\n   79  \n   80  			cache.del(id);\n   81: 			logger.verbose('No modification so removing from cache: ' + id + ', now size is: ' + cache.size());		\n   82  		};\n   83  	}\n\n2 matches in 1 file\n\n\nSearching 22 files for \"we made\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n   28  		}\n   29  \n   30: 		console.log('we made it')\n   31  		return deferWork(function() {\n   32  			var def = deferred();\n\n1 match in 1 file\n\n\nSearching 22 files for \"find by id\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n   30  		return deferWork(function() {\n   31  			var def = deferred();\n   32: 			console.log('find by id: ' + id);\n   33  			tripRepository.findById(id, function(err, result){\n   34  				if (result == null) {\n\n1 match in 1 file\n\n\nSearching 22 files for \"loading2\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n  171  			loadItem(id)\n  172  			.then(function(item) {\n  173: 						console.log('loading2');\n  174  				unlock(id);\n  175  				item.IsComplete = true;\n\n1 match in 1 file\n\n\nSearching 22 files for \"request\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\place.js:\n    1: var request = require('request');\n    2  var cheerio = require('cheerio');\n    3  var deferred = require('deferred');\n    .\n   43  	var hrefCopied = href;\n   44  	\n   45: 	request({uri: href, followRedirect: true, maxRedirects: 20}, closeOverLoadResponse(href, progressId, def));	\n   46  \n   47  	return def.promise;\n\nC:\\Source\\node\\trip\\app\\promisify_test.js:\n    1  var deferred = require('deferred');\n    2  var assert = require('node-assertthat');\n    3: var request = require('request');\n    4  \n    5: deferred.promisify(request)\n    6  	('http://www.google.com.au')\n    7  	.then(function (args) {\n\nC:\\Source\\node\\trip\\app\\review-get.js:\n    1  var deferred = require('deferred');\n    2: var request = require('request');\n    3  var cheerio = require('cheerio');\n    4  var deferWorkLib = require('./deferWork');\n    .\n   22  			'&servlet=Hotel_Review&expand=1&extraad=true&extraadtarget=' + target;\n   23  \n   24: 	request(href, function(error, resp, body) {\n   25  		if (error) {throw new Error(error);}\n   26  		if (resp.statusCode != 200) {\n\n9 matches across 3 files\n\n\nSearching 22 files for \"request\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\promisify_test.js:\n    1  var deferred = require('deferred');\n    2  var assert = require('node-assertthat');\n    3: var request = require('request');\n    4  \n    5: deferred.promisify(request)\n    6  	('http://www.google.com.au')\n    7  	.then(function (args) {\n\nC:\\Source\\node\\trip\\app\\review-get.js:\n    1  var deferred = require('deferred');\n    2: var request = require('request');\n    3  var cheerio = require('cheerio');\n    4  var deferWorkLib = require('./deferWork');\n    .\n   22  			'&servlet=Hotel_Review&expand=1&extraad=true&extraadtarget=' + target;\n   23  \n   24: 	request(href, function(error, resp, body) {\n   25  		if (error) {throw new Error(error);}\n   26  		if (resp.statusCode != 200) {\n\n6 matches across 2 files\n",
 			"settings":
 			{
-				"buffer_size": 1249,
+				"buffer_size": 8894,
 				"line_ending": "Windows",
 				"name": "Find Results",
 				"scratch": true
+			}
+		},
+		{
+			"file": "app/review-get.js",
+			"settings":
+			{
+				"buffer_size": 1500,
+				"line_ending": "Windows"
 			}
 		},
 		{
@@ -304,12 +330,44 @@
 				"buffer_size": 3776,
 				"line_ending": "Windows"
 			}
+		},
+		{
+			"file": "app/tripRegistry.js",
+			"settings":
+			{
+				"buffer_size": 873,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "tests/test_deferWorkTracked.js",
+			"settings":
+			{
+				"buffer_size": 891,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "app/deferWork.js",
+			"settings":
+			{
+				"buffer_size": 2643,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "app/repository.js",
+			"settings":
+			{
+				"buffer_size": 1092,
+				"line_ending": "Windows"
+			}
 		}
 	],
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 58.0,
+		"height": 35.0,
 		"selected_items":
 		[
 			[
@@ -349,6 +407,9 @@
 	},
 	"file_history":
 	[
+		"/C/Source/node/trip/app/deferWork.js",
+		"/C/Users/kym/AppData/Roaming/Sublime Text 3/Packages/User/Refactor.sublime-settings",
+		"/C/Users/kym/AppData/Roaming/Sublime Text 3/Packages/sublime-text-refactor/Refactor.sublime-settings",
 		"/C/Users/kym/AppData/Roaming/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
 		"/C/Source/node/trip/app/trip-schemas.js",
 		"/C/Source/node/trip/app/checkProgress.js",
@@ -362,7 +423,6 @@
 		"/C/Source/node/trip/app/place.js",
 		"/C/Source/node/trip/app/clear-db.js",
 		"/C/Source/node/trip/integration/test_findMongo.js",
-		"/C/Source/node/trip/app/deferWork.js",
 		"/C/Source/node/trip/tests/test_trip-document-manager.js",
 		"/C/Source/node/trip/app/trip-document-manager.js",
 		"/C/Source/node/trip/tests/test_cleanComplete.js",
@@ -474,9 +534,7 @@
 		"/C/Source/GRMS/azuredeploy/fasttrackintegration-ci.msbuild",
 		"/C/Source/GRMS/azuredeploy/fasttrackintegration-ci .msbuild",
 		"/C/Source/GRMS/tools/integrateFtNdr.sh",
-		"/C/Source/SaturdayPlan",
-		"/C/Source/GRMS/azuredeploy/fasttrack-ci.msbuild",
-		"/C/Source/GRMS/FastTrack.Migrations/deployment/configureConnectionString.msbuild"
+		"/C/Source/SaturdayPlan"
 	],
 	"find":
 	{
@@ -498,6 +556,37 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"request",
+			"loading2",
+			"find by id",
+			"we made",
+			"removing from c",
+			"removing",
+			"Modified",
+			"isModif",
+			"setModified",
+			"isComplete",
+			"markAsCompleteOnChi",
+			"isComplete",
+			"newProgr",
+			"debugger",
+			"newId",
+			"addToCache",
+			"loadItem",
+			"self",
+			"findById",
+			"mongoProto",
+			"markAsComplete",
+			"loadItem",
+			"load",
+			"addToCache",
+			"unlock",
+			"addToCache",
+			"mongoDocProto",
+			"newProgress",
+			"trackedDef",
+			"loading",
+			"progressRepor",
 			"tripDoc",
 			"debugger",
 			"setModi",
@@ -594,38 +683,7 @@
 			"ProgressProxy",
 			"Loading",
 			"cons",
-			"console.l",
-			"console.",
-			"console",
-			"doc",
-			"();\n",
-			"save",
-			"resolve",
-			"then",
-			"save",
-			"promisif",
-			"href",
-			"createDoc",
-			"debugger",
-			"tripEntit",
-			"mongoose",
-			"Title",
-			"trim",
-			"\\.Hotel",
-			"hotel",
-			"url",
-			"getUrl",
-			"appStart",
-			"hotel",
-			"processHote",
-			"hotel",
-			"());\n",
-			"deferred\\(",
-			"getUrl",
-			"$",
-			"cheerio",
-			"proce",
-			"loadPage"
+			"console.l"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -667,15 +725,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 5437,
+						"buffer_size": 5591,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2043,
-								2043
+								2002,
+								2002
 							]
 						],
 						"settings":
@@ -684,7 +742,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 939.0,
+						"translation.y": 1124.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -695,15 +753,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1760,
+						"buffer_size": 1769,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1662,
-								1662
+								1159,
+								1159
 							]
 						],
 						"settings":
@@ -712,13 +770,41 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 624.0,
+						"translation.y": 575.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
 					"buffer": 2,
+					"file": "app/trip-schemas-in-memory.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1327,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1318,
+								1322
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 837.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 3,
 					"file": "app/hotelRegistry.js",
 					"semi_transient": false,
 					"settings":
@@ -739,26 +825,26 @@
 							"syntax": "Packages/JavaScript/JavaScript.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 68.0,
+						"translation.y": 810.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
-					"buffer": 3,
+					"buffer": 4,
 					"file": "app/place.js",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 6988,
+						"buffer_size": 7204,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								4958,
-								4958
+								1412,
+								1412
 							]
 						],
 						"settings":
@@ -767,26 +853,26 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 2987.0,
+						"translation.y": 707.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
-					"buffer": 4,
+					"buffer": 5,
 					"file": "app/progressRegistry.js",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 6200,
+						"buffer_size": 6932,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2969,
-								2969
+								3908,
+								3908
 							]
 						],
 						"settings":
@@ -795,13 +881,13 @@
 							"syntax": "Packages/JavaScript/JavaScript.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 2088.0,
+						"translation.y": 2715.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
-					"buffer": 5,
+					"buffer": 6,
 					"file": "app/logging.js",
 					"semi_transient": false,
 					"settings":
@@ -828,11 +914,11 @@
 					"type": "text"
 				},
 				{
-					"buffer": 6,
+					"buffer": 7,
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1249,
+						"buffer_size": 8894,
 						"regions":
 						{
 							"match":
@@ -863,6 +949,214 @@
 									[
 										1140,
 										1148
+									],
+									[
+										1383,
+										1394
+									],
+									[
+										1465,
+										1476
+									],
+									[
+										1503,
+										1514
+									],
+									[
+										1570,
+										1581
+									],
+									[
+										1614,
+										1625
+									],
+									[
+										1708,
+										1719
+									],
+									[
+										1824,
+										1835
+									],
+									[
+										1962,
+										1973
+									],
+									[
+										2127,
+										2138
+									],
+									[
+										2174,
+										2185
+									],
+									[
+										2221,
+										2232
+									],
+									[
+										2246,
+										2257
+									],
+									[
+										2284,
+										2295
+									],
+									[
+										2357,
+										2368
+									],
+									[
+										2437,
+										2448
+									],
+									[
+										2453,
+										2464
+									],
+									[
+										2530,
+										2541
+									],
+									[
+										2802,
+										2810
+									],
+									[
+										3128,
+										3136
+									],
+									[
+										3366,
+										3374
+									],
+									[
+										3755,
+										3765
+									],
+									[
+										3801,
+										3811
+									],
+									[
+										3828,
+										3838
+									],
+									[
+										3966,
+										3976
+									],
+									[
+										4201,
+										4211
+									],
+									[
+										4316,
+										4326
+									],
+									[
+										4557,
+										4567
+									],
+									[
+										4599,
+										4609
+									],
+									[
+										4627,
+										4637
+									],
+									[
+										4901,
+										4909
+									],
+									[
+										5112,
+										5120
+									],
+									[
+										5364,
+										5372
+									],
+									[
+										5712,
+										5727
+									],
+									[
+										5923,
+										5938
+									],
+									[
+										6179,
+										6186
+									],
+									[
+										6484,
+										6494
+									],
+									[
+										6806,
+										6814
+									],
+									[
+										7000,
+										7007
+									],
+									[
+										7019,
+										7026
+									],
+									[
+										7168,
+										7175
+									],
+									[
+										7459,
+										7466
+									],
+									[
+										7478,
+										7485
+									],
+									[
+										7523,
+										7530
+									],
+									[
+										7695,
+										7702
+									],
+									[
+										7714,
+										7721
+									],
+									[
+										7919,
+										7926
+									],
+									[
+										8279,
+										8286
+									],
+									[
+										8298,
+										8305
+									],
+									[
+										8343,
+										8350
+									],
+									[
+										8515,
+										8522
+									],
+									[
+										8534,
+										8541
+									],
+									[
+										8739,
+										8746
 									]
 								],
 								"scope": ""
@@ -871,15 +1165,15 @@
 						"selection":
 						[
 							[
-								981,
-								981
+								8536,
+								8536
 							]
 						],
 						"settings":
 						{
 							"detect_indentation": false,
 							"line_numbers": false,
-							"output_tag": 2,
+							"output_tag": 12,
 							"result_base_dir": "",
 							"result_file_regex": "^([A-Za-z\\\\/<].*):$",
 							"result_line_regex": "^ +([0-9]+):",
@@ -887,13 +1181,41 @@
 							"syntax": "Packages/Default/Find Results.hidden-tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 558.0,
+						"translation.y": 5112.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
-					"buffer": 7,
+					"buffer": 8,
+					"file": "app/review-get.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1500,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								923,
+								923
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 9,
 					"file": "app/trip-document-manager.js",
 					"semi_transient": false,
 					"settings":
@@ -916,6 +1238,117 @@
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "app/tripRegistry.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 873,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								301,
+								301
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "tests/test_deferWorkTracked.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 891,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								253,
+								253
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 12,
+					"file": "app/deferWork.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2643,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								596,
+								599
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 646.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 13,
+					"file": "app/repository.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1092,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 146.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -965,6 +1398,62 @@
 		"height": 0.0,
 		"selected_items":
 		[
+			[
+				"repo",
+				"app\\repository.js"
+			],
+			[
+				"tsim",
+				"app\\trip-schemas-in-memory.js"
+			],
+			[
+				"deferw",
+				"app\\deferWork.js"
+			],
+			[
+				"def",
+				"app\\deferWork.js"
+			],
+			[
+				"test_dwt",
+				"tests\\test_deferWorkTracked.js"
+			],
+			[
+				"defer",
+				"app\\deferWork.js"
+			],
+			[
+				"prgreg",
+				"app\\progressRegistry.js"
+			],
+			[
+				"scra",
+				"app\\scrape.js"
+			],
+			[
+				"tripregs",
+				"app\\tripRegistry.js"
+			],
+			[
+				"registry",
+				"app\\progressRegistry.js"
+			],
+			[
+				"hore",
+				"app\\hotelRegistry.js"
+			],
+			[
+				"sch",
+				"app\\trip-schemas-in-memory.js"
+			],
+			[
+				"sche",
+				"app\\trip-schemas-in-memory.js"
+			],
+			[
+				"scr",
+				"app\\scrape.js"
+			]
 		],
 		"width": 0.0
 	},
