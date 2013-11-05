@@ -9,7 +9,7 @@ try {
 	var heapdump = require('heapdump');
 }
 catch (e) {
-
+	console.log("Couldn't import heapdump: " + e);
 }
 // var nodetime = require('nodetime');
 // nodetime.profile({
@@ -32,6 +32,8 @@ var workerQueue = async.queue(function(task, callback) {
 }, 100);
 place.workerQueue = workerQueue;
 
+var progressRegistry = null;
+
 
 //require('./trip-schemas-in-memory').Entities()
 require('./trip-schemas').Entities()
@@ -42,7 +44,7 @@ require('./trip-schemas').Entities()
 	var hotelRegistry = new TripRegistry(tripEntities.HotelMongo);
 
 	var hotelRegistry = require('./hotelRegistry')(tripEntities.HotelMongo);
-	var progressRegistry = require('./progressRegistry')(tripEntities.TripMongo, hotelRegistry);
+	progressRegistry = require('./progressRegistry')(tripEntities.TripMongo, hotelRegistry);
 	place.setProgressRegistry(progressRegistry);
 
 	appStart(tripEntities, progressRegistry);
@@ -81,9 +83,10 @@ function checkForCompletion(entities, rootId, progressRegistry) {
 	.done(function(isAllWorkDone) {
 		logger.verbose('number of items in cache: ' + progressRegistry.cacheSize());
 
-		if (checkCount++ % 600 == 0 && heapdump) {
-			heapdump.writeSnapshot('/var/local/' + Date.now() + '.heapsnapshot');
-		}
+		// if (checkCount++ % 60 == 0 && heapdump) {
+		// 	console.log('writing heap');
+		// 	heapdump.writeSnapshot('/var/local/heapdumps/' + Date.now() + '.heapsnapshot');
+		// }
 
 		if (!isAllWorkDone) {
 			setTimeout(checkForCompletion, 1000, entities, rootId, progressRegistry);

@@ -108,10 +108,10 @@ var tDeferred = function() {
 	var id = uuid.v1();
 	var myDeferred = deferred();
 	var tracker = {self: this, isResolved: false};
-	unresolvedPromises[id] = tracker;
+	//unresolvedPromises[id] = tracker;
 
 	this.resolve = function() {
-		unresolvedPromises[id].isResolved = true;
+		//unresolvedPromises[id].isResolved = true;
 		return myDeferred.resolve.apply(myDeferred, arguments);
 	};
 
