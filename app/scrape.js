@@ -38,7 +38,7 @@ place.loadTracker = new function loadTracker() {
 				return 0;
 			}
 
-			var elapsedSecs = process.hrtime(startTime)[1] / 1000000000.0;
+			var elapsedSecs = process.hrtime(startTime)[0];
 			return pageCount / elapsedSecs;
 		}
 	};
