@@ -1,5 +1,9 @@
 var http = require('follow-redirects').http;
 var deferred = require('deferred');
+var url = require('url');
+var logger = require('./logger');
+
+http.globalAgent.maxSockets = 100;
 
 function loadResponse(def) {
 	return function loadResponseClosure(resp) {
@@ -22,10 +26,18 @@ module.exports = {
 	load: function(href, bodyCB) {	
 		var def = deferred();
 
-		http.get(href, loadResponse(def))
+		var options = url.parse(href);
+		//options.agent = false;
+
+		http.get(options, loadResponse(def))
 		.on("error", function(e) {
 			console.log(e);
-			throw new Error(e);
+			load(href, bodyCB)
+			.then(function(body) {
+				def.resolve(body);
+			})
+			.done();
+
 		});	
 
 		return def.promise;
