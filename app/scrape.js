@@ -16,7 +16,6 @@ var url = require('url');
 var trip = require('./Trip');
 var place = require('./place');
 require('./arrayExt');
-var TripRegistry = require('./tripRegistry');
 var async = require('async');
 
 
@@ -95,7 +94,7 @@ place.loadTracker = new function loadTracker() {
 			return requestTime / pageCount;
 		}
 	};
-};
+}();
 
 var isExiting = false;
 var totalWorkItemsProcessed = 0;
@@ -124,9 +123,6 @@ var progressRegistry = null;
 require('./trip-schemas').Entities()
 .then(function (schemas) {	
 	var tripEntities = schemas;
-
-	var tripRegistry = new TripRegistry(tripEntities.TripMongo);
-	var hotelRegistry = new TripRegistry(tripEntities.HotelMongo);
 
 	var hotelRegistry = require('./hotelRegistry')(tripEntities.HotelMongo);
 	progressRegistry = require('./progressRegistry')(tripEntities.TripMongo, hotelRegistry);
@@ -208,7 +204,7 @@ function handleExit() {
 	}
 
 	process.exit(0);
-};
+}
 
 process.on('SIGINT', handleExit);
 process.on('SIGTERM', handleExit);

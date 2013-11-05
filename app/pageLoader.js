@@ -22,8 +22,12 @@ function loadResponse(def) {
 	};
 }
 
-module.exports = {
-	load: function(href, bodyCB) {	
+var exportObj = {
+	load: function(href, bodyCB, errCount) {
+		if (!errCount) {
+			errCount = 0;
+		}	
+
 		var def = deferred();
 
 		var options = url.parse(href);
@@ -31,8 +35,14 @@ module.exports = {
 
 		http.get(options, loadResponse(def))
 		.on("error", function(e) {
-			console.log(e);
-			load(href, bodyCB)
+			errCount++;
+			logger.verbose('Communication Error: ' + errCount + ': ' + e);
+
+			if (errCount >= 5) {
+				throw new Error(e);
+			}
+
+			exportObj.load(href, bodyCB, errCount)
 			.then(function(body) {
 				def.resolve(body);
 			})
@@ -43,3 +53,5 @@ module.exports = {
 		return def.promise;
 	}
 };
+
+module.exports = exportObj;
