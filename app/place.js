@@ -1,7 +1,8 @@
-var http = require('follow-redirects').http;
+
 var cheerio = require('cheerio');
-var deferred = require('deferred');
+
 var defWorkLib = require('./deferWork');
+var deferred = defWorkLib.deferred;
 var deferWork = defWorkLib.deferWork;
 var mapSyncronously = defWorkLib.mapSyncronously;
 var Review = require('./review').Review;
@@ -12,6 +13,8 @@ var Hotel = require('./hotel').Hotel;
 var tDeferred = defWorkLib.trackedDeferred;
 var tDefMap = defWorkLib.trackedMap;
 require('./arrayExt');
+
+var pageLoader = require('./pageLoader');
 
 var promisify = deferred.promisify;
 
@@ -44,93 +47,78 @@ var continueLoading = function(href, progressId) {
 
 	var hrefCopied = href;
 	
-	http.get(href, closeOverLoadResponse(href, progressId, def))
-	.on("error", function(e) {
-		console.log(e);
-		throw new Error(e);
-	});	
+	var pageLoadId = {href: href, rand: Math.random()};
+	exports.loadTracker.newPageLoad(pageLoadId);
+	pageLoader.load(href)
+	.then(function(body) {
+		exports.loadTracker.endPageLoad(pageLoadId);
+		handleResponse(body, href, progressId);
+		def.resolve();
+	})
+	.done();
 
 	return def.promise;
 };
 
-var closeOverLoadResponse = function(href, progressId, def, childProcessor) {
-	var loadResponse = function(resp) {
-		if (resp.statusCode != 200) {
-			throw new Error("We didn't get 200, we got " + resp.statusCode + " while loading " + href);
+var handleResponse = function(body, href, progressId) {
+	//exports.loadTracker.endPageLoad(href);
+
+	$ = cheerio.load(body);
+
+	var selecter = null;
+
+	// Process the reviews without the use of a new queue job
+	if (href.match(/\/Hotel_Review/)) {	
+		// TODO: make this align with the other cases so we can refactor.	
+		console.log('processing child ' + href);	
+		// processChildHotel(progressId, href, $)
+		// .then(function () {
+		// 	console.log('reviews done for ' + href);
+		// 	progressRegistry.markAsComplete(progressId);
+		// 	def.resolve();
+		// })
+		// .done();	
+		progressRegistry.markAsComplete(progressId);
+		return;	
+	}
+	
+	if (href.match(/\/Tourism-/)) {
+		var viewHotels = $('#HSCS_SEE_ALL');
+
+		selecter = viewHotels.length == 0 
+			? $('.lodging .summaryLink')
+			: viewHotels;			
+
+		if (selecter.length == 0) {
+			// No hotels for this location
+			progressRegistry.markAsComplete(progressId);
+			return; 
 		}
-
-		var respParts = [];
-		resp.on("data", function(chunk) {
-			respParts.push(chunk);
-		});
-
-		resp.on('end', function() {
-			exports.loadTracker.newPageLoad();
-			var body = respParts.join('');
-			var resolutionHandler = null;
-
-			$ = cheerio.load(body);
-
-			var selecter = null;
-
-			// Process the reviews without the use of a new queue job
-			if (href.match(/\/Hotel_Review/)) {	
-				// TODO: make this align with the other cases so we can refactor.	
-				console.log('processing child ' + href);	
-				// processChildHotel(progressId, href, $)
-				// .then(function () {
-				// 	console.log('reviews done for ' + href);
-				// 	progressRegistry.markAsComplete(progressId);
-				// 	def.resolve();
-				// })
-				// .done();	
-				progressRegistry.markAsComplete(progressId);
-				def.resolve();
-				return;	
-			}
-			
-			if (href.match(/\/Tourism-/)) {
-				var viewHotels = $('#HSCS_SEE_ALL');
-
-				selecter = viewHotels.length == 0 
-					? $('.lodging .summaryLink')
-					: viewHotels;			
-
-				if (selecter.length == 0) {
-					// No hotels for this location
-					progressRegistry.markAsComplete(progressId);
-
-					def.resolve();
-					return; 
-				}
-			}
-			else if (href.match(/\/Hotels-/)) {			
-				selecter = $('#ACCOM_OVERVIEW .listing .property_title');
-			}
-			else if (href.match(/\/AllLocations-/)) {
-				selecter = $('#BODYCON table td a');				
-			}
-			
-			else {
-				console.log('Specifal Url: ' + href);
-			}
-
-			var childHrefs = selecter.map(function() {return $(this).attr('href');});
-
-			progressRegistry.setNumberOfExpectedChildren(childHrefs.length, progressId);		
-
-			// Here we will resolve immediatelly after queuing more work
-			processChildren(childHrefs, progressId);		
-			def.resolve();
-		});
+	}
+	else if (href.match(/\/Hotels-/)) {			
+		selecter = $('#ACCOM_OVERVIEW .listing .property_title');
+	}
+	else if (href.match(/\/AllLocations-/)) {
+		selecter = $('#BODYCON table td a');				
+	}
+	
+	else {
+		console.log('Specifal Url: ' + href);
 	}
 
-	return loadResponse;
-};
+	var childHrefs = selecter.map(function() {return $(this).attr('href');});
 
-var placeWorkerFunction = function(err, workItem) {
+	progressRegistry.setNumberOfExpectedChildren(childHrefs.length, progressId);		
+
+	// Here we will resolve immediatelly after queuing more work
+	processChildren(childHrefs, progressId);		
+}
+
+var placeWorkerFunction = function(err, workItem, def) {
 	processChild(workItem.href, workItem.progressId)
-	.done();
+	.done(function(){
+		def.resolve();
+	});
 }
 
 var processChildren = function(childHrefs, progressId) {

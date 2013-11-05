@@ -119,6 +119,7 @@ var tDeferred = function() {
 };
 
 module.exports.trackedDeferred = deferred;
+module.exports.deferred = deferred;
 
 module.exports.enableTracking = function() {
 	module.exports.trackedDeferred = tDeferred;

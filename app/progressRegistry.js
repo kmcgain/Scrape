@@ -2,7 +2,7 @@ var deferred = require('deferred');
 var promisify = deferred.promisify;
 var deferWork = require('./deferWork').deferWork;
 var cache = require('memory-cache');
-var cacheDropTimeoutPeriodInMs = 5000;
+var cacheDropTimeoutPeriodInMs = 50000;
 
 var logger = require('./logging');
 
@@ -13,6 +13,8 @@ module.exports = function(tripRepository, hotelRegistry) {
 	// we only care about the state where no locks have been taken
 	var locks = []; 
 	var self = this;	
+	var cacheHits = 0;
+	var cacheMisses = 0;
 
 	var loadItem = function(id, loadOptions) {
 		if (!id) {
@@ -24,8 +26,11 @@ module.exports = function(tripRepository, hotelRegistry) {
 		var existingItem = cache.get(id);
 
 		if (existingItem != null) {
+			cacheHits++;
 			return deferred(existingItem);
 		}
+
+		cacheMisses++;
 
 		return deferWork(function() {
 			var def = deferred();
@@ -58,7 +63,6 @@ module.exports = function(tripRepository, hotelRegistry) {
 
 			// Save the document before dropping			
 			if (item.hasPendingChanges) {
-				logger.verbose('Item modified ' + id);
 
 				item.hasPendingChanges = false;
 				item.save(function (err) {
@@ -67,7 +71,6 @@ module.exports = function(tripRepository, hotelRegistry) {
 						throw new Error(err);
 					}								
 
-					logger.verbose('Save succesfull ' + id);
 					setTimeout(cacheCB(item), cacheDropTimeoutPeriodInMs, id);
 				});
 
@@ -75,7 +78,6 @@ module.exports = function(tripRepository, hotelRegistry) {
 			}
 
 			cache.del(id);
-			logger.verbose('No modification so removing from cache: ' + id + ', now size is: ' + cache.size());		
 		};
 	}
 
@@ -111,7 +113,6 @@ module.exports = function(tripRepository, hotelRegistry) {
 	}
 
 	var setModified = function(item) {		
-		logger.verbose('Marking item as modifed: ' + item._id);
 		item.hasPendingChanges = true;
 	}
 
@@ -152,6 +153,14 @@ module.exports = function(tripRepository, hotelRegistry) {
 	}
 
 	var ext = {
+		cacheHits: function() {
+			return cacheHits;
+		},
+
+		cacheMisses: function() {
+			return cacheMisses;
+		},
+
 		cacheSize: function() {
 			return cache.size();
 		},
