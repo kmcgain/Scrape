@@ -1,13 +1,14 @@
 var http = require('follow-redirects').http;
 var deferred = require('deferred');
 var url = require('url');
-var logger = require('./logger');
+var logger = require('./logging');
 
 http.globalAgent.maxSockets = 100;
 
 function loadResponse(def) {
 	return function loadResponseClosure(resp) {
 		if (resp.statusCode != 200) {
+			console.log('Load error');
 			throw new Error("We didn't get 200, we got " + resp.statusCode + " while loading " + href);
 		}
 
@@ -23,7 +24,7 @@ function loadResponse(def) {
 }
 
 var exportObj = {
-	load: function(href, bodyCB, errCount) {
+	load: function(href, errCount) {
 		if (!errCount) {
 			errCount = 0;
 		}	
@@ -42,7 +43,7 @@ var exportObj = {
 				throw new Error(e);
 			}
 
-			exportObj.load(href, bodyCB, errCount)
+			exportObj.load(href, errCount)
 			.then(function(body) {
 				def.resolve(body);
 			})

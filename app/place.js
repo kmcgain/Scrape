@@ -71,14 +71,13 @@ var handleResponse = function(body, href, progressId) {
 	if (href.match(/\/Hotel_Review/)) {	
 		// TODO: make this align with the other cases so we can refactor.	
 		console.log('processing child ' + href);	
-		// processChildHotel(progressId, href, $)
-		// .then(function () {
-		// 	console.log('reviews done for ' + href);
-		// 	progressRegistry.markAsComplete(progressId);
-		// 	def.resolve();
-		// })
-		// .done();	
-		progressRegistry.markAsComplete(progressId);
+		processChildHotel(progressId, href, $)
+		.then(function () {
+			console.log('reviews done for ' + href);
+			progressRegistry.markAsComplete(progressId);
+		})
+		.done();	
+		
 		return;	
 	}
 	
@@ -192,14 +191,22 @@ var processHotel = function(href, progressId, $) {
 		.done();
 	}
 
-	return deferred(0);
 	var def = deferred();
 
-	progressRegistry.getHotel(href, progressId)
+	var hotelLocationId = href.match(/Hotel_Review-(\w*-\w*)-Reviews/)[1];
+	if (!hotelLocationId) {
+		throw new Error('Bad hotel location id');
+	}
+
+	var idForHotel = null;
+	var theseReviews = [];
+
+	progressRegistry.getHotel(hotelLocationId, progressId)
 	.then(function(hotelId) {
+		idForHotel = hotelId;
+
 		var reviewPromises = [];
 
-		var theseReviews = [];
 		$('#REVIEWS .reviewSelector').each(function() {
 			var elem = this;	
 			var review = new Review(this.attr('id').match(/review_(.*)/)[1]);
@@ -208,13 +215,10 @@ var processHotel = function(href, progressId, $) {
 
 		exports.logger.verbose('Hotel review count: ' + theseReviews.length + ' for hotel: ' + href);
 
-		// NOTE: Async
-		hotelRegistry.addReviews(hotelId, theseReviews);
-
-		reviewPromises.push(getReviewDetails(hotel, theseReviews));
+		reviewPromises.push(getReviewDetails(hotelLocationId, theseReviews));
 
 		if (!isHotelLandingPage(href)) {
-			// We don't want page the reviews
+			// We don't want to page the reviews
 
 			if (reviewPromises.length == 0) {
 				return deferred(0);
@@ -227,10 +231,13 @@ var processHotel = function(href, progressId, $) {
 
 		// page the reviews
 		var pageCountTxt = $('.pagination .pgCount').text();
-		var pcMatch = pageCountTxt.match(/1-\d+ of (\d+) reviews/);
+		var pcMatch = pageCountTxt.match(/1-\d+ of (\d+) review/);
 
 		if (!pcMatch || pcMatch.length == 0) {
 			// no reviews?
+			if (reviewPromises.length != 0) {
+				throw new Error('Not implemented');
+			}
 			progressRegistry.markAsComplete(progressId);
 			return deferred(0);
 		}
@@ -252,6 +259,7 @@ var processHotel = function(href, progressId, $) {
 		});
 	})
 	.then(function() {
+		hotelRegistry.addReviews(idForHotel, theseReviews);
 		def.resolve();
 	})
 	.done();	
@@ -278,6 +286,11 @@ var progressRegistry = null;
 exports.setProgressRegistry = function(pr) {
 	progressRegistry = pr;
 };
+
+var hotelRegistry;
+exports.setHotelRegistry = function(hr) {
+	hotelRegistry = hr;
+}
 
 // TODO: Copied and pasted
 function getUrl(relHref) {

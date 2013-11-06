@@ -20,7 +20,6 @@ var mongoProto = function(db) {
 	return {
 		find: function(filter, cb){cb(null, db.filter(objToArrayFilter(filter)));},
 		findById: function(id, cb){
-			debugger;
 			cb(null, db.filter(function filter(item){ return item._id == id})[0])},
 	};
 };
@@ -28,7 +27,6 @@ var mongoProto = function(db) {
 var mongoDocProto = function(db) {
 	return {
 		save: function(cb){
-			debugger;
 			db.push(this);
 
 			if (cb) {

@@ -196,26 +196,27 @@ module.exports = function(tripRepository, hotelRegistry) {
 
 		newProgress: newProgress,
 
-		getHotel: function(href, parentId) {
+		getHotel: function(locationId, parentId) {
 			var def = deferred();
 
 			loadItem(parentId)
 			.then(function(parent) {
-				var hotelExists = (parent.Hotel != null);
+				var hotelExists = !!(parent.Hotel);
+
 
 				var promise = hotelExists
-					? deferred(parent.Hotel)
-					: hotelRegistry.getHotel(href.match(/Hotel_Review-(\w*-\w*)-Reviews/)[1]);
+					? hotelRegistry.getHotelById(parent.Hotel)
+					: hotelRegistry.getHotelByLocationId(locationId);
 
 				promise
 				.then(function(hotel) {
 					if (!hotelExists) {
-						parent.Hotel = hotel;
+						parent.Hotel = hotel._id;
 						setModified(parent);
 					}
 					unlock(parentId);
 
-					def.resolve(parent.Hotel._id);
+					def.resolve(hotel._id);
 				})
 				.done();
 			});
