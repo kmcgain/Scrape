@@ -1,5 +1,6 @@
 var proxyquire = require('proxyquire').noCallThru();
 var assert = require('node-assertthat');
+var deferred = require('deferred');
 
 var responseBody = [
 '<div id="expanded_review_17137387">',
@@ -11,12 +12,11 @@ var responseBody = [
 
 
 var getReview = proxyquire('../app/review-get', {
-	request: function(href, cb) {
-		process.nextTick(function() {
-			cb(null, {statusCode: 200}, responseBody);
-		});	
-
-		return {setMaxListeners: function(){}};	
+	'./pageLoader': {
+		load: function(href) {
+			debugger;
+			return deferred(responseBody.join(''));			
+		}
 	}
 })
 .getReviewDetails;

@@ -13,6 +13,7 @@ var trackedMap = function(promises) {
 	return def.promise;
 }
 
+
 var trackedReduce = function() {
 	var args = arguments;
 	return deferWork(function() {
@@ -108,10 +109,10 @@ var tDeferred = function() {
 	var id = uuid.v1();
 	var myDeferred = deferred();
 	var tracker = {self: this, isResolved: false};
-	//unresolvedPromises[id] = tracker;
+	unresolvedPromises[id] = tracker;
 
 	this.resolve = function() {
-		//unresolvedPromises[id].isResolved = true;
+		delete unresolvedPromises[id];
 		return myDeferred.resolve.apply(myDeferred, arguments);
 	};
 

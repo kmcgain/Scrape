@@ -1,7 +1,9 @@
 var assert = require('node-assertthat');
 var TripRegistry = require('../app/tripRegistry');
 
-var repository = {};
+var repository = {findById: function(id){
+
+}};
 var tr = new TripRegistry(repository);
 
 tr.Store({_id: 1, testA: true});

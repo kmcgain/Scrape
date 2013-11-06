@@ -1,5 +1,4 @@
 var deferred = require('deferred');
-var http = require('http');
 var cheerio = require('cheerio');
 var deferWorkLib = require('./deferWork');
 var pageLoader = require('./pageLoader');

@@ -2,6 +2,12 @@ var deferWork = require('../app/deferWork');
 var assert = require('node-assertthat');
 var deferred = require('deferred');
 
+var deferPreTrack = new deferWork.trackedDeferred();
+assert.that(deferWork.currentUnresolved().length, is.equalTo(0));
+deferPreTrack.resolve();
+deferPreTrack.promise.done();
+
+deferWork.enableTracking();
 var defer = new deferWork.trackedDeferred();
 assert.that(deferWork.currentUnresolved().length, is.equalTo(1));
 
