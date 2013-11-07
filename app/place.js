@@ -215,7 +215,9 @@ var processHotel = function(href, progressId, $) {
 
 		exports.logger.verbose('Hotel review count: ' + theseReviews.length + ' for hotel: ' + href);
 
-		reviewPromises.push(getReviewDetails(hotelLocationId, theseReviews));
+		if (theseReviews.length != 0) {
+			reviewPromises.push(getReviewDetails(hotelLocationId, theseReviews));
+		}
 
 		if (!isHotelLandingPage(href)) {
 			// We don't want to page the reviews
@@ -231,18 +233,19 @@ var processHotel = function(href, progressId, $) {
 
 		// page the reviews
 		var pageCountTxt = $('.pagination .pgCount').text();
-		var pcMatch = pageCountTxt.match(/1-\d+ of (\d+) review/);
+		var pcMatch = pageCountTxt.match(/1-\d+ of ([\d,]+) review/);
 
 		if (!pcMatch || pcMatch.length == 0) {
 			// no reviews?
 			if (reviewPromises.length != 0) {
-				throw new Error('Not implemented');
+				console.log(pageCountTxt);
+				throw new Error('Not implemented ' + href);
 			}
 			progressRegistry.markAsComplete(progressId);
 			return deferred(0);
 		}
 
-		var totalNumberOfReviews = pcMatch[1];
+		var totalNumberOfReviews = pcMatch[1].replace(',', '');
 		
 		for (var i = 10; i < totalNumberOfReviews; i += 10) {
 			var reviewHref = getReviewPageRef(href, i);

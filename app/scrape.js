@@ -20,12 +20,12 @@ var async = require('async');
 
 
 
-// try {
-// 	var heapdump = require('heapdump');
-// }
-// catch (e) {
-// 	console.log("Couldn't import heapdump: " + e);
-// }
+try {
+	var heapdump = require('heapdump');
+}
+catch (e) {
+	console.log("Couldn't import heapdump: " + e);
+}
 // var nodetime = require('nodetime');
 // nodetime.profile({
 //     accountKey: 'd1299ed3f939d927ff5c62e7b11e22f59eb46b4a', 
@@ -142,8 +142,8 @@ function getUrl(relHref) {
 function appStart(tripEntities, progressRegistry) {
 	console.log("Loading places");
 	//var allLocationsUrl = getUrl('/AllLocations-g1-Places-World.html');
-	//var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
-	var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
+	var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
+	//var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
 
 	//var allLocationsUrl = getUrl('http://www.tripadvisor.com.au/Tourism-g552127-Aireys_Inlet_Victoria-Vacations.html');
 

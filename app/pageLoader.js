@@ -5,11 +5,11 @@ var logger = require('./logging');
 
 http.globalAgent.maxSockets = 100;
 
-function loadResponse(def) {
+function loadResponse(def, retry) {
 	return function loadResponseClosure(resp) {
 		if (resp.statusCode != 200) {
 			console.log('Load error');
-			throw new Error("We didn't get 200, we got " + resp.statusCode + " while loading " + href);
+			retry(new Error("We didn't get 200, we got " + resp.statusCode + " while loading " + href)); 
 		}
 
 		var respParts = [];
@@ -34,8 +34,7 @@ var exportObj = {
 		var options = url.parse(href);
 		//options.agent = false;
 
-		http.get(options, loadResponse(def))
-		.on("error", function(e) {
+		var retry = function(e) {
 			errCount++;
 			logger.verbose('Communication Error: ' + errCount + ': ' + e);
 
@@ -48,8 +47,10 @@ var exportObj = {
 				def.resolve(body);
 			})
 			.done();
+		}
 
-		});	
+		http.get(options, loadResponse(def, retry))
+		.on("error", retry);	
 
 		return def.promise;
 	}
