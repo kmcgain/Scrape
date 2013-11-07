@@ -37,6 +37,16 @@ function dontAddTwice() {
 	assert.that(testPassed, is.true());
 };
 
+function ignoreAddTwice() {
+	var cr = new Cache();
+	cr.addItem(1, 1);
+	assert.that(cr.getItem(1).item, is.equalTo(1));
+
+	cr.addItemIfNotExist(1, 2);
+
+	assert.that(cr.getItem(1).item, is.equalTo(1));
+}
+
 function cacheTimeoutPolicy() {	
 	var def = deferred(),
 		testPassed = false,
@@ -89,11 +99,10 @@ function cacheSetupLockingPolicy() {
 		cr = new Cache({
 		policy: registry.createPolicyChain([registry.lockSetupPolicy(), {func: function(value, prev, next){
 			advanced = true;
-			assert.that(value.isLocked, is.true());
+			assert.that(value.lockCount, is.equalTo(1));
 		}}])
 	});
 
-	debugger;
 	var val = {a: 1 };
 	cr.addItem(1, val);
 
@@ -112,7 +121,7 @@ function cacheLockingPolicy() {
 		}
 		else {
 			wasRejected = true;
-			value.isLocked = false;
+			value.lockCount--;
 			next(value);
 		}
 	}}
@@ -125,7 +134,6 @@ function cacheLockingPolicy() {
 		policy: registry.createPolicyChain([registry.lockSetupPolicy(), myPolicy, registry.lockCheckPolicy(), finishPolicy])
 	});
 
-	debugger;
 	cr.addItem(1, 2);
 	assert.that(wasRejected, is.true());
 }
@@ -163,7 +171,6 @@ function cacheChain() {
 
 	var chain = registry.createPolicyChain([one, two, three, four]);
 
-
 	chain({id: 1, value: 10});
 	assert.that(collectedItem.value, is.equalTo(13));
 
@@ -172,6 +179,7 @@ function cacheChain() {
 addItem();
 addComplexKey();
 dontAddTwice();
+ignoreAddTwice();
 cacheTimeoutPolicy();
 cachePersistentTimeoutPolicyWithModification();
 cachePersistentTimeoutPolicyWithoutModification();

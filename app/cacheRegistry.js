@@ -14,40 +14,56 @@ var CacheRegistry = function(repository, options) {
 		chain.push(cacheLib.removePolicy());
 	}
 
-	var cache = new Cache({policy: cacheLib.createPolicyChain(chain, options.debugOut)});
+	var cache = new Cache({policy: cacheLib.createPolicyChain(chain, options ? options.debugOut : null)});
 
 	this.isCached = function(id) {
 		return cache.hasItem(id);
 	};
 
 	this.isLocked = function(id) {
-		return cache.getItem(id).isLocked;
+		var item = cache.getItem(id);
+		return item.lockCount && item.lockCount > 0;
 	}
 
 	this.unlock = function(id) {
-		cache.getItem(id).isLocked = false;
+		cache.getItem(id).lockCount--;
+	}
+
+	this.add = function(id, value) {
+		cache.addItem(id, value);
 	}
 
 	this.load = function(id, options) {
 		if (cache.hasItem(id)) {
 			this.hits++;
-			return deferred(cache.getItem(id).item);
+			var item = cache.getItem(id);
+			item.lockCount++; // lock it on every load. TODO: Can this be part of the chain??
+
+			return deferred(item.item);
 		}
 
 		this.misses++;
 
 		var d1 = deferred();
 
-		repository.findById(id, function(loadedItem) {
-			if (!options || !options.noCache) {
-				cache.addItem(id, loadedItem);
+		repository.findById(id, function(err, loadedItem) {
+			if (err) {
+				throw new Error(err);
 			}
-			
+
+			if (!options || !options.noCache && notAlreadyAdded) {
+				cache.addItemIfNotExist(id, loadedItem);
+			}
+
 			d1.resolve(loadedItem);
 		});
 
 		return d1.promise;
 	};
+
+	this.size = function() {
+		return cache.size();
+	}
 
 	this.hits = 0;
 	this.misses = 0;

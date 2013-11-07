@@ -13,11 +13,12 @@ var fakeDoc = function(id) {
 
 var repository = {
 		findById: function(id, cb) {
+			var err = null;
 			if (id == 1) {
-				cb(fakeDoc(1));
+				cb(err, fakeDoc(1));
 			}
 			if (id == 2) {
-				cb(fakeDoc(2));
+				cb(err, fakeDoc(2));
 			}
 		}
 	};
@@ -147,6 +148,28 @@ function testLoadWithoutCache() {
 	return def.promise;
 }
 
+function testLockOnLoadCachedValue() {
+	testSetup();
+	var def = deferred();
+
+	var cr = new CacheRegistry(repository, {timeout: 1});
+	cr.load(1)
+	.then(function() {
+		cr.unlock(1);
+
+		cr.load(1)
+		.then(function() {
+			assert.that(cr.isLocked(1), is.true());
+			cr.unlock(1);
+			def.resolve();
+		})
+		.done();
+	})
+	.done();
+
+	return def.promise;
+}
+
 function waitOnCondition(func, cleanUp, startTime) {
 	if (!startTime) {
 		startTime = process.hrtime();
@@ -190,4 +213,5 @@ testNoTimeout()
 .then(testPersistenceWithoutModification)
 .then(testPersistenceWithModification)
 .then(testLoadWithoutCache)
+.then(testLockOnLoadCachedValue)
 .done();

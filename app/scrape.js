@@ -164,18 +164,12 @@ function checkForCompletion(entities, rootId, progressRegistry) {
 	})
 	.done(function(isAllWorkDone) {
 		logger.verbose('number of items in cache: ' + progressRegistry.cacheSize());
-		//logger.verbose('Load rate/Avg Time: ' + place.loadTracker.currentRate() + '/' + place.loadTracker.averageRequest());
-		//logger.verbose('Total time spent deferring: ' + totalTimeDeferred);
 		var startDiff = process.hrtime(appStartTime);
 		var totalTimeInNano = startDiff[0] * 1e9 + startDiff[1];
 		var avgWorkTime = totalTimeInNano / 1e9 / totalWorkItemsProcessed;
 
 		logger.verbose('Time per work item: ' + avgWorkTime);
 		logger.verbose('Cache Hits/Misses: ' + progressRegistry.cacheHits() + '/' + progressRegistry.cacheMisses());
-		// if (checkCount++ % 60 == 0 && heapdump) {
-		// 	console.log('writing heap');
-		// 	heapdump.writeSnapshot('/var/local/heapdumps/' + Date.now() + '.heapsnapshot');
-		// }
 
 		if (!isAllWorkDone) {
 			setTimeout(checkForCompletion, 1000, entities, rootId, progressRegistry);
@@ -195,10 +189,7 @@ function appShutdown(entities) {
 
 function handleExit() {
 	isExiting = true;
-	// if (tripDocumentManager.WritingData) {
-	// 	process.nextTick(handleExit);
-	// 	return;
-	// }
+
 	if (!progressRegistry.isFinishedWriting()) {
 		process.nextTick(handleExit);
 		return;

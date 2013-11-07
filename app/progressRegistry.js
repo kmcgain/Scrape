@@ -1,100 +1,16 @@
 var deferred = require('deferred');
 var promisify = deferred.promisify;
 var deferWork = require('./deferWork').deferWork;
-var cache = require('memory-cache');
+var CacheRegistry = require('./CacheRegistry');
+
 var cacheDropTimeoutPeriodInMs = 50000;
 
 var logger = require('./logging');
 
 module.exports = function(tripRepository, hotelRegistry) {
-	var idCount = 1;
-	// the purpose of this is to prevent updates to docs without them being saved back to db
-	// we don't mind multiple locks being out on the one id
-	// we only care about the state where no locks have been taken
-	var locks = []; 
-	var self = this;	
-	var cacheHits = 0;
-	var cacheMisses = 0;
+	var cacheRegistry = new CacheRegistry(tripRepository);
 
-	var loadItem = function(id, loadOptions) {
-		if (!id) {
-			throw new Error('Bad id to load: ' + id);
-		}
 
-		locks.push(id); 
-
-		var existingItem = cache.get(id);
-
-		if (existingItem != null) {
-			cacheHits++;
-			return deferred(existingItem);
-		}
-
-		cacheMisses++;
-
-		return deferWork(function() {
-			var def = deferred();
-			tripRepository.findById(id, function(err, result){
-				if (result == null) {
-					throw new Error('Cannot load item because it is not cached or persisted: ' + id);
-				}
-				def.resolve(result);
-			});
-			return def.promise;
-		}, function(item) {		
-			if (loadOptions && loadOptions.noCache) {
-				logger.verbose('Loading an item without cache: ' + id);
-				return item;
-			}
-
-			addToCache(id, item);		
-			return item;
-		});
-	}
-
-	var cacheCB = function(item) {
-		return function(id) {
-			// We have dropped the cache item
-			var aLockExists = locks.indexOf(id) != -1;
-			if (aLockExists) {
-				logger.verbose('Lock still exists for ' + id);			
-				return;
-			}
-
-			// Save the document before dropping			
-			if (item.hasPendingChanges) {
-
-				item.hasPendingChanges = false;
-				item.save(function (err) {
-					if (err) {
-						logger.verbose('Error saving ' + id);
-						throw new Error(err);
-					}								
-
-					setTimeout(cacheCB(item), cacheDropTimeoutPeriodInMs, id);
-				});
-
-				return;
-			}
-
-			cache.del(id);
-		};
-	}
-
-	/*
-	 * We explicitly deal with the timeout because the implementation they provide
-	 * will stop returning the value from the cache as soon as the timeout expires.
-	 * This is potentially prior to our callback happening but we rely on our 
-	 * callback to save the item before it is removed from the cache
-	 */
-	var addToCache = function(id, item) {
-		cache.put(id, item);
-		setTimeout(cacheCB(item), cacheDropTimeoutPeriodInMs, id);
-	};
-
-	var unlock = function(id) {
-		locks.splice(locks.indexOf(id), 1);
-	}
 
 	var markAsCompleteOnChildren = function(parentId) {
 		ext.getChildren(parentId)
@@ -119,11 +35,11 @@ module.exports = function(tripRepository, hotelRegistry) {
 	var newProgress = function(href, parentId) {
 		if (parentId) {
 			return deferWork(function() {
-				return loadItem(parentId);
+				return cacheRegistry.load(parentId);
 			}, function(parent) {
 				
 				var newId = createNewProgress(href, parent);
-				unlock(parentId);
+				cacheRegistry.unlock(parentId);
 
 				return newId;
 			});
@@ -147,22 +63,22 @@ module.exports = function(tripRepository, hotelRegistry) {
 
 		newProgress.IsRoot = !parent;
 
-		addToCache(newProgress._id, newProgress);
+		cacheRegistry.add(newProgress._id, newProgress);
 
 		return newProgress._id;
 	}
 
 	var ext = {
 		cacheHits: function() {
-			return cacheHits;
+			return cacheRegistry.cacheHits;
 		},
 
 		cacheMisses: function() {
-			return cacheMisses;
+			return cacheRegistry.cacheMisses;
 		},
 
 		cacheSize: function() {
-			return cache.size();
+			return cacheRegistry.size();
 		},
 
 		isFinishedWriting: function() {
@@ -171,9 +87,12 @@ module.exports = function(tripRepository, hotelRegistry) {
 
 		isComplete: function(id, loadOptions) {
 			return deferWork(function() {
-				return loadItem(id, loadOptions);
+				return cacheRegistry.load(id, loadOptions);
 			}, function(item) {
-				unlock(id);
+				if (!loadOptions || !loadOptions.noCache) {
+					cacheRegistry.unlock(id);
+				}
+				
 				return !!(item.IsComplete); // return false on undefined
 			});
 		},
@@ -181,9 +100,9 @@ module.exports = function(tripRepository, hotelRegistry) {
 		markAsComplete: function(id) {
 			logger.verbose('Marking complete: ' + id);
 
-			loadItem(id)
+			cacheRegistry.load(id)
 			.then(function(item) {
-				unlock(id);
+				cacheRegistry.unlock(id);
 				item.IsComplete = true;
 				setModified(item);
 
@@ -199,10 +118,9 @@ module.exports = function(tripRepository, hotelRegistry) {
 		getHotel: function(locationId, parentId) {
 			var def = deferred();
 
-			loadItem(parentId)
+			cacheRegistry.load(parentId)
 			.then(function(parent) {
 				var hotelExists = !!(parent.Hotel);
-
 
 				var promise = hotelExists
 					? hotelRegistry.getHotelById(parent.Hotel)
@@ -214,7 +132,7 @@ module.exports = function(tripRepository, hotelRegistry) {
 						parent.Hotel = hotel._id;
 						setModified(parent);
 					}
-					unlock(parentId);
+					cacheRegistry.unlock(parentId);
 
 					def.resolve(hotel._id);
 				})
@@ -225,33 +143,33 @@ module.exports = function(tripRepository, hotelRegistry) {
 		},
 
 		setNumberOfExpectedChildren: function(number, parentId) {
-			loadItem(parentId)
+			cacheRegistry.load(parentId)
 			.then(function(parent) {
 				parent.NumberOfExpectedChildren = number;	
 				setModified(parent);
-				unlock(parentId);
+				cacheRegistry.unlock(parentId);
 			})
 			.done();			
 		},
 
 		getChildren: function(parentId) {
 			return deferWork(function() {
-				return loadItem(parentId);
+				return cacheRegistry.load(parentId);
 			}, function(parent) {
 
 				if (parent == null) {
 					throw new Error("parent doesn't exist");
 				}
-				unlock(parentId);
+				cacheRegistry.unlock(parentId);
 				return parent.Children;
 			});			
 		},
 
 		getUrl: function(progressId) {
 			return deferWork(function() {
-				return loadItem(progressId);
+				return cacheRegistry.load(progressId);
 			}, function(progress) {
-				unlock(progressId);
+				cacheRegistry.unlock(progressId);
 				return progress.Url;
 			})
 		},
@@ -262,9 +180,9 @@ module.exports = function(tripRepository, hotelRegistry) {
 			}
 			// TODO: optimise by searching by href, don't load all children
 			return deferWork(function() {
-				return deferred.map(children, function(child) {return loadItem(child);});
+				return deferred.map(children, function(child) {return cacheRegistry.load(child);});
 			}, function(loadedChildren) {
-				children.forEach(unlock);
+				children.forEach(function(childId){cacheRegistry.unlock(childId)});
 				return loadedChildren.filter(function(item){return item.Url == href})[0];
 			});
 		},
@@ -282,10 +200,10 @@ module.exports = function(tripRepository, hotelRegistry) {
 
 					newProgress(url, null)
 					.then(function(newId) {
-						return loadItem(newId);
+						return cacheRegistry.load(newId);
 					})
 					.then(function(item) {
-						unlock(item._id);
+						cacheRegistry.unlock(item._id);
 						def.resolve({id: item._id, href: url});
 					})
 					.done();
@@ -295,8 +213,8 @@ module.exports = function(tripRepository, hotelRegistry) {
 				
 				var root = roots[0];
 					
-				addToCache(root._id, root);
-				unlock(root._id);
+				cacheRegistry.add(root._id, root);
+				cacheRegistry.unlock(root._id);
 				def.resolve({id: root._id, href: root.Url});
 			});
 

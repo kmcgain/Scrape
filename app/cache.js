@@ -1,28 +1,45 @@
 var Cache = function(options) {
 	this.items = {};
-	debugger;
 	if (options && options.policy) {
 		this.policy = options.policy;
 	}
 };
 
-var convertId = function(id) {return JSON.stringify(id);};
+var convertId = function(id) {
+	var stringy = JSON.stringify(id);
+	return stringy;
+};
+
+var CacheAddError = function(key){};
 
 Cache.prototype = {
 	addItem: function(id, item) {
 		var key = convertId(id);
 		if (this.hasItem(id)) {
-			throw new Error("Can't add item twice: " + key);
+			throw new CacheAddError(key);			
 		}
 		var itemObj = {id: id, item: item};
 
 		this.items[key] = itemObj;
 
-		debugger;
 		if (this.policy) {
 			this.policy.call(this, itemObj);// Invoke policy with original id
 		}
 	},
+	
+	addItemIfNotExist: function(id, item) {
+		try {
+			this.addItem(id, item);
+		}
+		catch(e) {
+			if (e instanceof CacheAddError) {
+				return;
+			}
+
+			throw e;
+		}
+	},
+
 	getItem: function(id) {
 		id = convertId(id);
 		return this.items[id];
@@ -40,6 +57,17 @@ Cache.prototype = {
 		var key = convertId(id);
 
 		delete this.items[key];
+	},
+
+	size: function() {
+		var count = 0;
+		for (var key in this.items) {
+			if (this.items.hasOwnProperty(key)) {
+				count++;
+			}
+		}
+		
+		return count;
 	}
 };
 
@@ -65,14 +93,21 @@ module.exports.persistencePolicy = function() {
 	}};
 };
 
+/*
+ * we count locks rather than boolean because we want to allow multiple clients to take a lock
+ * but prevent the lock release until all clients have removed the lock.
+ */
 module.exports.lockSetupPolicy = function() { return {name: "lockSetup", func: function(value, prev, next) {
-	value.isLocked = true;
+	if (!value.lockCount) {
+		value.lockCount = 0;
+	}
+	value.lockCount++;
 	
 	next(value);
 }}};
 
 module.exports.lockCheckPolicy = function() { return {name: "lockCheck", func: function(value, prev, next) {
-	if (value.isLocked) {
+	if (value.lockCount > 0) {
 		prev(value);
 		return;
 	}
