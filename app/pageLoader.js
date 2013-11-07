@@ -5,7 +5,7 @@ var logger = require('./logging');
 
 http.globalAgent.maxSockets = 100;
 
-function loadResponse(def, retry) {
+function loadResponse(def, retry, href) {
 	return function loadResponseClosure(resp) {
 		if (resp.statusCode != 200) {
 			console.log('Load error');
@@ -49,7 +49,7 @@ var exportObj = {
 			.done();
 		}
 
-		http.get(options, loadResponse(def, retry))
+		http.get(options, loadResponse(def, retry, href))
 		.on("error", retry);	
 
 		return def.promise;
