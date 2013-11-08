@@ -137,7 +137,8 @@ module.exports = function(tripRepository, hotelRegistry) {
 					def.resolve(hotel._id);
 				})
 				.done();
-			});
+			})
+			.done();
 		
 			return def.promise;	
 		},
