@@ -63,11 +63,11 @@ place.loadTracker = new function loadTracker() {
 	var loads = new HashTable();
 
 	return {
-		newPageLoad: function(href) {
+		newPageLoad: function newPageLoad(href) {
 			loads.put(href, {startTime: process.hrtime()});
 		},
 
-		endPageLoad: function(href) {
+		endPageLoad: function endPageLoad(href) {
 			var item = loads.get(href);
 			loads.remove(href);
 
@@ -78,7 +78,7 @@ place.loadTracker = new function loadTracker() {
 			pageCount++;
 		},
 
-		currentRate: function() {
+		currentRate: function currentRate() {
 			if (pageCount == 0) {
 				return 0;
 			}
@@ -86,7 +86,7 @@ place.loadTracker = new function loadTracker() {
 			return pageCount / requestTime; 
 		},
 
-		averageRequest: function() {
+		averageRequest: function averageRequest() {
 			if (pageCount == 0) {
 				return 0;
 			}
@@ -100,7 +100,7 @@ var isExiting = false;
 var totalWorkItemsProcessed = 0;
 var appStartTime = process.hrtime();
 
-var workerQueue = async.queue(function(task, callback) {	
+var workerQueue = async.queue(function asyncQueueWorker(task, callback) {	
 	if (isExiting) {
 		return;
 	}
@@ -121,7 +121,7 @@ var progressRegistry = null;
 
 //require('./trip-schemas-in-memory').Entities()
 require('./trip-schemas').Entities()
-.then(function (schemas) {	
+.then(function entitiesLoaded(schemas) {	
 	var tripEntities = schemas;
 
 	var hotelRegistry = require('./hotelRegistry')(tripEntities.HotelMongo);
@@ -149,7 +149,7 @@ function appStart(tripEntities, progressRegistry) {
 
 	logger.verbose('starting');
 	progressRegistry.getRoot(allLocationsUrl)
-	.then(function(rootData) {
+	.then(function rootFound(rootData) {
 		checkForCompletion(tripEntities, rootData.id, progressRegistry);
 		return place.load(rootData.href, rootData.id)		
 	})
@@ -159,10 +159,10 @@ function appStart(tripEntities, progressRegistry) {
 var checkCount = 1;
 function checkForCompletion(entities, rootId, progressRegistry) {
 	progressRegistry.isComplete(rootId, {noCache: true})
-	.then(function(isComplete) {
+	.then(function completionCheck(isComplete) {
 		return isComplete && progressRegistry.isFinishedWriting();
 	})
-	.done(function(isAllWorkDone) {
+	.done(function allWorkDone(isAllWorkDone) {
 		logger.verbose('number of items in cache: ' + progressRegistry.cacheSize());
 		var startDiff = process.hrtime(appStartTime);
 		var totalTimeInNano = startDiff[0] * 1e9 + startDiff[1];
@@ -182,7 +182,7 @@ function checkForCompletion(entities, rootId, progressRegistry) {
 
 function appShutdown(entities) {
 	logger.verbose('closing repository');
-	entities.closeRepository(function() {
+	entities.closeRepository(function repositoryClosed() {
 		console.log('finished closing repository');
 	});
 }

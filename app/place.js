@@ -51,7 +51,7 @@ function continueLoading(href, progressId) {
 	var pageLoadId = {href: href, rand: Math.random()};
 	exports.loadTracker.newPageLoad(pageLoadId);
 	pageLoader.load(href)
-	.then(function(body) {
+	.then(function pageLoaded(body) {
 		exports.loadTracker.endPageLoad(pageLoadId);
 		handleResponse(body, href, progressId);
 		def.resolve();
@@ -73,7 +73,7 @@ function handleResponse(body, href, progressId) {
 		// TODO: make this align with the other cases so we can refactor.	
 		console.log('processing child ' + href);	
 		processChildHotel(progressId, href, $)
-		.then(function () {
+		.then(function childHotelProcessed() {
 			console.log('reviews done for ' + href);
 			progressRegistry.markAsComplete(progressId);
 		})
@@ -106,7 +106,7 @@ function handleResponse(body, href, progressId) {
 		console.log('Specifal Url: ' + href);
 	}
 
-	var childHrefs = selecter.map(function() {return $(this).attr('href');});
+	var childHrefs = selecter.map(function hrefMapper() {return $(this).attr('href');});
 
 	progressRegistry.setNumberOfExpectedChildren(childHrefs.length, progressId);		
 
@@ -116,13 +116,13 @@ function handleResponse(body, href, progressId) {
 
 function placeWorkerFunction(err, workItem, def) {
 	processChild(workItem.href, workItem.progressId)
-	.done(function(){
+	.done(function placeWorkerChildProcessed(){
 		def.resolve();
 	});
 }
 
 function processChildren(childHrefs, progressId) {
-	var workData = childHrefs.map(function(childHref) {
+	var workData = childHrefs.map(function childHrefMapper(childHref) {
 		return {progressId: progressId, href: childHref};
 	});
 
@@ -134,7 +134,7 @@ function processChildren(childHrefs, progressId) {
 }
 
 function processChildHotel(href, progressId, $) {
-	return processChild(progressId, href, function(absHref, prog) {
+	return processChild(progressId, href, function childHotelProcessed(absHref, prog) {
 		return processHotel(absHref, prog, $);
 	});
 }
@@ -145,9 +145,9 @@ function processChild(href, progressId, childProcessor) {
 	var def = new deferred();
 
 	mapDeferred(progressRegistry.getChildren(progressId))
-	.then(function(children) {
+	.then(function gotChildren(children) {
 		progressRegistry.findByHref(children, absHref)
-		.then(function(child) {
+		.then(function progressFound(child) {
 
 			if (child != null) {				
 				if (progressRegistry.isComplete(child)) {
@@ -162,7 +162,7 @@ function processChild(href, progressId, childProcessor) {
 			}
 
 			newProgressPromise
-			.then(function(newProgress) {		
+			.then(function newProgressLoaded(newProgress) {		
 				if (childProcessor != null) {
 					childProcessor(absHref, newProgress)
 					.then(def.resolve)
@@ -186,7 +186,7 @@ function processChild(href, progressId, childProcessor) {
 function processHotel(href, progressId, $) {
 	if (exports.logger) {
 		progressRegistry.getUrl(progressId)
-		.then(function(url) {
+		.then(function gotUrl(url) {
 			exports.logger.verbose('Process Hotel: ' + href + ' from prog: ' + url);
 		})
 		.done();
@@ -203,7 +203,7 @@ function processHotel(href, progressId, $) {
 	var theseReviews = [];
 
 	progressRegistry.getHotel(hotelLocationId, progressId)
-	.then(function(hotelId) {
+	.then(function gotHotel(hotelId) {
 		idForHotel = hotelId;
 
 		var reviewPromises = [];
@@ -255,14 +255,14 @@ function processHotel(href, progressId, $) {
 			);
 		}
 
-		return deferWork(function() {
+		return deferWork(function deferReviews() {
 			return mapDeferred(reviewPromises);
-		}, function() {
+		}, function reviewsDone() {
 			console.log('The entire hotel has been completed at this point');
 			hotelRegistry.markAsComplete(hotelId);
 		});
 	})
-	.then(function() {
+	.then(function reviewSetFinished() {
 		hotelRegistry.addReviews(idForHotel, theseReviews);
 		def.resolve();
 	})
