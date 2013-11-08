@@ -1,3 +1,4 @@
+"use strict";
 
 var cheerio = require('cheerio');
 
@@ -10,8 +11,8 @@ var getReviewDetails = require('./review-get').getReviewDetails;
 var url = require('url');
 var trip = require('./Trip');
 var Hotel = require('./hotel').Hotel;
-var tDeferred = defWorkLib.trackedDeferred;
-var tDefMap = defWorkLib.trackedMap;
+var deferred = defWorkLib.deferred;
+var mapDeferred = defWorkLib.map;
 require('./arrayExt');
 
 var pageLoader = require('./pageLoader');
@@ -20,7 +21,7 @@ var promisify = deferred.promisify;
 
 var $ = null;
 
-var loadPlace = function(href, progressId) {		
+function loadPlace(href, progressId) {
 	var def = deferred();
 	// NOTE: This will prevent the change in data over time
 	progressRegistry.isComplete(progressId)
@@ -38,12 +39,12 @@ var loadPlace = function(href, progressId) {
 	return def.promise;
 }
 
-var continueLoading = function(href, progressId) {
+function continueLoading(href, progressId) {
 	if (exports.logger) {
 		exports.logger.verbose('Loading: ' + href);
 	}
 
-	var def = new tDeferred();
+	var def = new deferred();
 
 	var hrefCopied = href;
 	
@@ -58,9 +59,9 @@ var continueLoading = function(href, progressId) {
 	.done();
 
 	return def.promise;
-};
+}
 
-var handleResponse = function(body, href, progressId) {
+function handleResponse(body, href, progressId) {
 	//exports.loadTracker.endPageLoad(href);
 
 	$ = cheerio.load(body);
@@ -68,7 +69,7 @@ var handleResponse = function(body, href, progressId) {
 	var selecter = null;
 
 	// Process the reviews without the use of a new queue job
-	if (href.match(/\/Hotel_Review/)) {	
+	if (href.match(/\/Hotel_Review/)) {
 		// TODO: make this align with the other cases so we can refactor.	
 		console.log('processing child ' + href);	
 		processChildHotel(progressId, href, $)
@@ -78,7 +79,7 @@ var handleResponse = function(body, href, progressId) {
 		})
 		.done();	
 		
-		return;	
+		return;
 	}
 	
 	if (href.match(/\/Tourism-/)) {
@@ -113,14 +114,14 @@ var handleResponse = function(body, href, progressId) {
 	processChildren(childHrefs, progressId);		
 }
 
-var placeWorkerFunction = function(err, workItem, def) {
+function placeWorkerFunction(err, workItem, def) {
 	processChild(workItem.href, workItem.progressId)
 	.done(function(){
 		def.resolve();
 	});
 }
 
-var processChildren = function(childHrefs, progressId) {
+function processChildren(childHrefs, progressId) {
 	var workData = childHrefs.map(function(childHref) {
 		return {progressId: progressId, href: childHref};
 	});
@@ -132,18 +133,18 @@ var processChildren = function(childHrefs, progressId) {
 	exports.workerQueue.push(workData, placeWorkerFunction);
 }
 
-var processChildHotel = function(href, progressId, $) {
+function processChildHotel(href, progressId, $) {
 	return processChild(progressId, href, function(absHref, prog) {
 		return processHotel(absHref, prog, $);
 	});
 }
 
-var processChild = function(href, progressId, childProcessor) {
+function processChild(href, progressId, childProcessor) {
 	var absHref = getUrl(href);	
 
-	var def = new tDeferred();
+	var def = new deferred();
 
-	tDefMap(progressRegistry.getChildren(progressId))
+	mapDeferred(progressRegistry.getChildren(progressId))
 	.then(function(children) {
 		progressRegistry.findByHref(children, absHref)
 		.then(function(child) {
@@ -182,11 +183,11 @@ var processChild = function(href, progressId, childProcessor) {
 	return def.promise;
 }
 
-var processHotel = function(href, progressId, $) {
+function processHotel(href, progressId, $) {
 	if (exports.logger) {
 		progressRegistry.getUrl(progressId)
 		.then(function(url) {
-			exports.logger.verbose('Process Hotel: ' + href + ' from prog: ' + url);	
+			exports.logger.verbose('Process Hotel: ' + href + ' from prog: ' + url);
 		})
 		.done();
 	}
@@ -226,7 +227,7 @@ var processHotel = function(href, progressId, $) {
 				return deferred(0);
 			}
 
-			return tDefMap(reviewPromises);
+			return mapDeferred(reviewPromises);
 		}
 
 		hotelRegistry.setTitle(hotelId, $('#HEADING').text().trim());
@@ -255,7 +256,7 @@ var processHotel = function(href, progressId, $) {
 		}
 
 		return deferWork(function() {
-			return tDefMap(reviewPromises);
+			return mapDeferred(reviewPromises);
 		}, function() {
 			console.log('The entire hotel has been completed at this point');
 			hotelRegistry.markAsComplete(hotelId);
@@ -268,7 +269,7 @@ var processHotel = function(href, progressId, $) {
 	.done();	
 
 	return def.promise;
-};
+}
 
 function getReviewPageRef(href, pageCount) {
 	var regex = /(.*Hotel_Review-\w*-\w*-Reviews-)(.*)/;
@@ -286,12 +287,12 @@ exports.load = loadPlace;
 exports.logger = null;
 exports.workerQueue = null;
 var progressRegistry = null;
-exports.setProgressRegistry = function(pr) {
+exports.setProgressRegistry = function setProgressRegistry(pr) {
 	progressRegistry = pr;
 };
 
 var hotelRegistry;
-exports.setHotelRegistry = function(hr) {
+exports.setHotelRegistry = function setHotelRegistry(hr) {
 	hotelRegistry = hr;
 }
 

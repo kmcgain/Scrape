@@ -1,4 +1,5 @@
 var cacheLib = require('./cache');
+var cachePolicy = require('./cachePolicy');
 var Cache = cacheLib.Cache;
 var deferred = require('deferred');
 
@@ -6,12 +7,12 @@ var CacheRegistry = function(repository, options) {
 	var timeout = (options && options.timeout) ? options.timeout : 1000;
 
 	var chain = [];
-	chain.push(cacheLib.lockSetupPolicy());
+	chain.push(cachePolicy.lockSetupPolicy());
 	if (!options || !options.noTimeout) {
-		chain.push(cacheLib.timeoutPolicy(timeout));
-		chain.push(cacheLib.lockCheckPolicy());
-		chain.push(cacheLib.persistencePolicy());
-		chain.push(cacheLib.removePolicy());
+		chain.push(cachePolicy.timeoutPolicy(timeout));
+		chain.push(cachePolicy.lockCheckPolicy());
+		chain.push(cachePolicy.persistencePolicy());
+		chain.push(cachePolicy.removePolicy());
 	}
 
 	var cache = new Cache({policy: cacheLib.createPolicyChain(chain, options ? options.debugOut : null)});

@@ -1,18 +1,18 @@
-var deferred = require('deferred');
 var cheerio = require('cheerio');
 var deferWorkLib = require('./deferWork');
 var pageLoader = require('./pageLoader');
-var promisify = deferred.promisify;
-var tDeferred = deferWorkLib.trackedDeferred;
 
-exports.getReviewDetails = function(hotelLocationId, reviews) {
+var deferred = deferWorkLib.deferred;
+var promisify = deferred.promisify;
+
+exports.getReviewDetails = function getReviewDetails(hotelLocationId, reviews) {
 	if (reviews.length == 0) {
 		return deferred(0);
 	}
 
-	var def = new tDeferred();
+	var def = new deferred();
 
-	reviewIds = reviews.map(function(review) { return review.Id; })
+	reviewIds = reviews.map(function reviewMap(review) { return review.Id; })
 		.join(',');
 
 	target = reviews[0].Id;
@@ -22,10 +22,10 @@ exports.getReviewDetails = function(hotelLocationId, reviews) {
 			'&servlet=Hotel_Review&expand=1&extraad=true&extraadtarget=' + target;
 
 	pageLoader.load(href)
-	.then(function(body) {		
+	.then(function reviewPageLoaded(body) {		
 		var $ = cheerio.load(body);
 
-		reviews.forEach(function(review) {
+		reviews.forEach(function eachReview(review) {
 			var reviewSelector = $('#expanded_review_' + review.Id);
 
 			if (reviewSelector.length != 1) {
@@ -39,7 +39,8 @@ exports.getReviewDetails = function(hotelLocationId, reviews) {
 		});		
 
 		def.resolve();
-	});
+	})
+	.done();
 	
 	return def.promise;
 }

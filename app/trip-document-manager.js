@@ -1,14 +1,13 @@
-var deferred = require('deferred');
 var deferWorkLib = require('./deferWork');
-var trackedDeferred = deferWorkLib.trackedDeferred;
+var deferred = deferWorkLib.deferred;
 var deferWork = deferWorkLib.deferWork;
 var promisify = deferred.promisify;
 var sprintf = require('util').format;
-var deferredMap = deferWorkLib.trackedMap;
+var deferredMap = deferWorkLib.map;
 var Trip = require('./Trip');
 
 var pSave = function(doc) {
-	var def = new trackedDeferred();
+	var def = new deferred();
 
 	doc.save(function(err) {
 				if (err) {
@@ -30,7 +29,7 @@ exports.TripDocumentManager = function (tripRegistry, hotelRegistry, entities) {
 	var self = this;
 
 	var createDocument = function(progress, idCallback) {
-		var def = new trackedDeferred();
+		var def = new deferred();
 
 		var doc = new entities.TripMongo();
 
@@ -120,7 +119,7 @@ exports.TripDocumentManager = function (tripRegistry, hotelRegistry, entities) {
 			return deferredMap(promises);
 		}
 		
-		var docDef = new trackedDeferred();
+		var docDef = new deferred();
 
 		tripRegistry.Load(progress.TripDoc_id)
 		.then(function(doc) {

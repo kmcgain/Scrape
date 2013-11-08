@@ -1,3 +1,5 @@
+"use strict";
+
 var http = require('follow-redirects').http;
 var deferred = require('deferred');
 var url = require('url');
@@ -24,7 +26,7 @@ function loadResponse(def, retry, href) {
 }
 
 var exportObj = {
-	load: function(href, errCount) {
+	load: function load(href, errCount) {
 		if (!errCount) {
 			errCount = 0;
 		}	
@@ -34,7 +36,7 @@ var exportObj = {
 		var options = url.parse(href);
 		//options.agent = false;
 
-		var retry = function(e) {
+		var retry = function retry(e) {
 			errCount++;
 			logger.verbose('Communication Error: ' + errCount + ': ' + e);
 
@@ -50,7 +52,7 @@ var exportObj = {
 		}
 
 		http.get(options, loadResponse(def, retry, href))
-		.on("error", retry);	
+		.on("error", retry);
 
 		return def.promise;
 	}

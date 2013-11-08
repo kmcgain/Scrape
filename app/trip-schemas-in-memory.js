@@ -1,5 +1,4 @@
-var deferred = require('deferred');
-var tDeferred = require('./deferWork').trackedDeferred;
+var deferred = require('./deferWork').deferred;
 
 function objToArrayFilter(filter) {
 	return function(item) {

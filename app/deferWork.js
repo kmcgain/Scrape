@@ -1,10 +1,10 @@
 var deferred = require('deferred');
 var uuid = require('node-uuid');
 
-var unresolvedPromises = {};
+var unresolvedPromises = null;
 
-var trackedMap = function(promises) {
-	var def = new tDeferred();
+function trackedMap(promises) {
+	var def = new module.exports.deferred();
 
 	deferred.map(promises)
 	.then(def.resolve)
@@ -14,14 +14,14 @@ var trackedMap = function(promises) {
 }
 
 
-var trackedReduce = function() {
+function trackedReduce() {
 	var args = arguments;
 	return deferWork(function() {
 		return deferred.reduce.apply(deferred.reduce, args);
 	});	
 }
 
-var deferWork = function(work, handler) {		
+function deferWork(work, handler) {		
 	if (Array.isArray(work)) {
 		return trackedMap(
 			work.map(function(item) {
@@ -30,7 +30,7 @@ var deferWork = function(work, handler) {
 		);
 	}
 
-	var def = new tDeferred();
+	var def = new module.exports.deferred();
 	
 	work()
 	.then(function(result) {
@@ -49,7 +49,7 @@ var deferWork = function(work, handler) {
 }
 
 
-var mapSyncronously = function(items, work) {
+function mapSyncronously(items, work) {
 	if (items.length == 0) {
 		return deferred(0);
 	}
@@ -58,7 +58,7 @@ var mapSyncronously = function(items, work) {
 
 	var promise = work(items[0]);
 
-	var def = new tDeferred();
+	var def = new module.exports.deferred();
 
 	promise
 	.then(function() {
@@ -76,7 +76,7 @@ var mapSyncronously = function(items, work) {
 
 module.exports.deferWork = deferWork;
 module.exports.mapSyncronously = mapSyncronously;
-module.exports.printUnresolved = function() {
+module.exports.printUnresolved = function printUnresolved() {
 	var unresolved = module.exports.currentUnresolved();;
 	console.log('Unresolved: ' + unresolved.length);
 	unresolved.forEach(function (def) {
@@ -84,14 +84,19 @@ module.exports.printUnresolved = function() {
 	});
 };
 
-module.exports.currentUnresolved = function() {
+module.exports.currentUnresolved = function currentUnresolved() {
 	return module.exports.currentUnfinalised().filter(function(item) {
 		return !item.isResolved;
 	});
 };
 
-module.exports.currentUnfinalised = function() {
+module.exports.currentUnfinalised = function currentUnfinalised() {
 	var defs = [];
+
+	if (!unresolvedPromises) {
+		return defs;
+	}
+
 	Object.keys(unresolvedPromises).forEach(function(key) {
 		if (unresolvedPromises.hasOwnProperty(key)) {			
 			var elem = unresolvedPromises[key];
@@ -102,10 +107,14 @@ module.exports.currentUnfinalised = function() {
 	return defs;
 }
 
-module.exports.trackedReduce = trackedReduce;
-module.exports.trackedMap = trackedMap;
+module.exports.reduce = trackedReduce;
+module.exports.map = trackedMap;
 
-var tDeferred = function() {
+function tDeferred() {
+	if (arguments.length > 1) {
+		throw new Error('we need to implement resolved promises');
+	}
+
 	var id = uuid.v1();
 	var myDeferred = deferred();
 	var tracker = {self: this, isResolved: false};
@@ -119,12 +128,14 @@ var tDeferred = function() {
 	this.promise = myDeferred.promise;
 };
 
-module.exports.trackedDeferred = deferred;
 module.exports.deferred = deferred;
 
-module.exports.enableTracking = function() {
-	module.exports.trackedDeferred = tDeferred;
+module.exports.enableTracking = function enableTracking() {
+	unresolvedPromises = {};
+	module.exports.deferred = tDeferred;
 };
+
+module.exports.promisify = deferred.promisify;
 
 function keys(obj)
 {

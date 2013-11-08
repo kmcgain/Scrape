@@ -1,7 +1,7 @@
 var deferred = require('deferred');
 var promisify = deferred.promisify;
 var deferWork = require('./deferWork').deferWork;
-var CacheRegistry = require('./CacheRegistry');
+var CacheRegistry = require('./cacheRegistry');
 
 var cacheDropTimeoutPeriodInMs = 50000;
 
@@ -92,7 +92,7 @@ module.exports = function(tripRepository, hotelRegistry) {
 				if (!loadOptions || !loadOptions.noCache) {
 					cacheRegistry.unlock(id);
 				}
-				
+
 				return !!(item.IsComplete); // return false on undefined
 			});
 		},

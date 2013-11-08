@@ -1,7 +1,7 @@
-var deferred = require('deferred');
 var deferWorkLib = require('./deferWork');
 var deferWork = deferWorkLib.deferWork;
-var tReduce = deferWorkLib.trackedReduce;
+var reduceDeferred = deferWorkLib.reduce;
+var deferred = deferWorkLib.deferred;
 
 var unwrapProgress = function (prog)
 {
@@ -25,7 +25,7 @@ var unwrapProgress = function (prog)
 }
 
 function reduceChildren(prog) {
-	return tReduce(prog.GetChildren(), function (accum, child) {
+	return reduceDeferred(prog.GetChildren(), function (accum, child) {
 
 		return deferWork(function() {
 			return unwrapProgress(child);
