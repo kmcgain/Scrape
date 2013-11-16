@@ -3,7 +3,7 @@ var promisify = deferred.promisify;
 var deferWork = require('./deferWork').deferWork;
 var CacheRegistry = require('./cacheRegistry');
 
-var cacheDropTimeoutPeriodInMs = 50000;
+var cacheDropTimeoutPeriodInMs = 5000;
 
 var logger = require('./logging');
 
@@ -82,7 +82,7 @@ module.exports = function(tripRepository, hotelRegistry) {
 		},
 
 		isFinishedWriting: function() {
-			return cache.size() == 0;
+			return cacheRegistry.size() == 0;
 		},
 
 		isComplete: function(id, loadOptions) {
@@ -115,34 +115,6 @@ module.exports = function(tripRepository, hotelRegistry) {
 
 		newProgress: newProgress,
 
-		getHotel: function(locationId, parentId) {
-			var def = deferred();
-
-			cacheRegistry.load(parentId)
-			.then(function(parent) {
-				var hotelExists = !!(parent.Hotel);
-
-				var promise = hotelExists
-					? hotelRegistry.getHotelById(parent.Hotel)
-					: hotelRegistry.getHotelByLocationId(locationId);
-
-				promise
-				.then(function(hotel) {
-					if (!hotelExists) {
-						parent.Hotel = hotel._id;
-						setModified(parent);
-					}
-					cacheRegistry.unlock(parentId);
-
-					def.resolve(hotel._id);
-				})
-				.done();
-			})
-			.done();
-		
-			return def.promise;	
-		},
-
 		setNumberOfExpectedChildren: function(number, parentId) {
 			cacheRegistry.load(parentId)
 			.then(function(parent) {
@@ -151,6 +123,28 @@ module.exports = function(tripRepository, hotelRegistry) {
 				cacheRegistry.unlock(parentId);
 			})
 			.done();			
+		},
+
+		setAuxData: function(parentId, auxKey, auxData) {
+			cacheRegistry.load(parentId)
+			.then(function(parent) {
+				parent[auxKey] = auxData;
+				setModified(parent);
+				cacheRegistry.unlock(parentId);
+			})
+		},
+
+		getAuxData: function(parentId, auxKey) {
+			var def = deferred();
+
+			cacheRegistry.load(parentId)
+			.then(function(parent) {
+				var data = parent[auxKey];
+				def.resolve(data);
+				cacheRegistry.unlock(parentId);
+			})
+
+			return def.promise;
 		},
 
 		getChildren: function(parentId) {
@@ -199,12 +193,14 @@ module.exports = function(tripRepository, hotelRegistry) {
 				if (err || roots.length == 0) {
 					// create root
 
+					var rootId = null;
 					newProgress(url, null)
 					.then(function(newId) {
-						return cacheRegistry.load(newId);
+						rootId = newId;
+						return cacheRegistry.load(rootId);
 					})
 					.then(function(item) {
-						cacheRegistry.unlock(item._id);
+						cacheRegistry.unlock(rootId);
 						def.resolve({id: item._id, href: url});
 					})
 					.done();
@@ -215,7 +211,6 @@ module.exports = function(tripRepository, hotelRegistry) {
 				var root = roots[0];
 					
 				cacheRegistry.add(root._id, root);
-				cacheRegistry.unlock(root._id);
 				def.resolve({id: root._id, href: root.Url});
 			});
 

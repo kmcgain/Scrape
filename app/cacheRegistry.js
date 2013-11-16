@@ -26,8 +26,14 @@ var CacheRegistry = function(repository, options) {
 		return item.lockCount && item.lockCount > 0;
 	}
 
-	this.unlock = function(id) {
-		cache.getItem(id).lockCount--;
+	this.unlock = function(id) {	
+
+		var item = cache.getItem(id);
+		if (!item.lockCount) {
+			throw new Error('bad unlock: ' + id + ' ' + item.lockCount);
+		}
+
+		item.lockCount--;
 	}
 
 	this.add = function(id, value) {
@@ -38,7 +44,10 @@ var CacheRegistry = function(repository, options) {
 		if (cache.hasItem(id)) {
 			this.hits++;
 			var item = cache.getItem(id);
-			item.lockCount++; // lock it on every load. TODO: Can this be part of the chain??
+
+			if (!options || !options.noCache) {
+				item.lockCount++; // lock it on every load. TODO: Can this be part of the chain??
+			}
 
 			return deferred(item.item);
 		}
@@ -51,9 +60,13 @@ var CacheRegistry = function(repository, options) {
 			if (err) {
 				throw new Error(err);
 			}
+			if (loadedItem == null) {
+				throw new Error('could not load by id: ' + id);
+			}
 
-			if (!options || !options.noCache && notAlreadyAdded) {
+			if (!options || !options.noCache) {
 				cache.addItemIfNotExist(id, loadedItem);
+				cache.getItem(id).lockCount++;
 			}
 
 			d1.resolve(loadedItem);
@@ -61,6 +74,44 @@ var CacheRegistry = function(repository, options) {
 
 		return d1.promise;
 	};
+
+	this.loadBy = function(signature) {	
+		var def = new deferred();
+
+		
+		var item = cache.getBySignature(signature);
+
+		if (item == null || item.length == 0) {
+			repository.find(signature, function(err, loadedItems) {
+				if (err) {
+					throw new Error(err);
+				}
+
+				if (loadedItems.length == 0) {
+					def.resolve(null);
+				}
+				else if (loadedItems.length > 1) {
+					throw new Error('too many with same signature');
+				}
+				else {
+					var loadedItem = loadedItems[0];
+					cache.addItemIfNotExist(loadedItem._id, loadedItem)
+					cache.getItem(loadedItem._id).lockCount++;
+					def.resolve(loadedItem);
+				}
+			})
+		}
+		else if (item.length > 1) {
+			throw new Error('too many with same signature');			
+		}
+		else {
+			var loadedItem = item[0];
+			loadedItem.lockCount++;
+			def.resolve(loadedItem.item);
+		}
+
+		return def.promise;
+	}
 
 	this.size = function() {
 		return cache.size();

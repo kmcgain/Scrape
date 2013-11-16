@@ -21,6 +21,9 @@ exports.Entities = function () {
 			Title: String,
 			LocationId: String,
 			Reviews: [repository.Schema.Types.Mixed],
+			NumberOfExpectedChildren: Number,
+			IsComplete: Boolean,
+			ParentProgressId: repository.Schema.ObjectId,
 		});
 
 		var tripMongo = repository.modelExt('Trip', tripSchema);

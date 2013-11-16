@@ -27,12 +27,15 @@ Cache.prototype = {
 		}
 	},
 	
-	addItemIfNotExist: function(id, item) {
+	addItemIfNotExist: function(id, item, notAddedCB) {
 		try {
 			this.addItem(id, item);
 		}
 		catch(e) {
 			if (e instanceof CacheAddError) {
+				if (notAddedCB) {
+					notAddedCB();
+				}
 				return;
 			}
 
@@ -43,6 +46,38 @@ Cache.prototype = {
 	getItem: function(id) {
 		id = convertId(id);
 		return this.items[id];
+	},
+
+	getBySignature: function(signature) {
+		var result = [];
+		for (var key in this.items) {	
+			if (this.items.hasOwnProperty(key)) {
+				var item = this.items[key];
+				var value = item.item;
+
+				var anyMatch = false;
+				var anyNotMatch = false;
+
+				for (var sig in signature) {
+					if (signature.hasOwnProperty(sig)) {
+						var sigVal = signature[sig];
+						debugger;
+						if (value[sig] == sigVal) {
+							anyMatch = true;					
+						}
+						else {
+							anyNotMatch = true;
+						}
+					}
+				}		
+
+				if (anyMatch && !anyNotMatch) {
+					result.push(item);
+				}	
+			}
+		}
+
+		return result;
 	},
 
 	hasItem: function(id) {

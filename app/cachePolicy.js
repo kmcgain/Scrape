@@ -10,7 +10,6 @@ module.exports.timeoutPolicy = function(timeInMs) {
 
 module.exports.persistencePolicy = function() {
 	return {name: "persistence", func: function(value, prev, next) {
-		debugger;
 		if (value.item.hasPendingChanges)
 		{
 			value.item.save(function(){/*handle error*/next(value)});
@@ -29,7 +28,6 @@ module.exports.lockSetupPolicy = function() { return {name: "lockSetup", func: f
 	if (!value.lockCount) {
 		value.lockCount = 0;
 	}
-	value.lockCount++;
 	
 	next(value);
 }}};

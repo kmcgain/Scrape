@@ -1,3 +1,5 @@
+require('longjohn');
+
 var deferWork = require('./deferWork');
 var meld = require('meld');
 var deferred = deferWork.deferred;
@@ -124,8 +126,9 @@ require('./trip-schemas').Entities()
 .then(function entitiesLoaded(schemas) {	
 	var tripEntities = schemas;
 
-	var hotelRegistry = require('./hotelRegistry')(tripEntities.HotelMongo);
-	progressRegistry = require('./progressRegistry')(tripEntities.TripMongo, hotelRegistry);
+	
+	progressRegistry = require('./progressRegistry')(tripEntities.TripMongo);
+	var hotelRegistry = require('./hotelRegistry')(tripEntities.HotelMongo, progressRegistry);
 	place.setProgressRegistry(progressRegistry);
 	place.setHotelRegistry(hotelRegistry);
 
@@ -144,6 +147,7 @@ function appStart(tripEntities, progressRegistry) {
 	//var allLocationsUrl = getUrl('/AllLocations-g1-Places-World.html');
 	var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
 	//var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
+	//var allLocationsUrl = getUrl('/Hotel_Review-g2708206-d1086922-Reviews-Allansford_Hotel_Motel-Allansford_Victoria.html');
 
 	//var allLocationsUrl = getUrl('http://www.tripadvisor.com.au/Tourism-g552127-Aireys_Inlet_Victoria-Vacations.html');
 
@@ -168,8 +172,8 @@ function checkForCompletion(entities, rootId, progressRegistry) {
 		var totalTimeInNano = startDiff[0] * 1e9 + startDiff[1];
 		var avgWorkTime = totalTimeInNano / 1e9 / totalWorkItemsProcessed;
 
-		logger.verbose('Time per work item: ' + avgWorkTime);
-		logger.verbose('Cache Hits/Misses: ' + progressRegistry.cacheHits() + '/' + progressRegistry.cacheMisses());
+		//logger.verbose('Time per work item: ' + avgWorkTime);
+		//logger.verbose('Cache Hits/Misses: ' + progressRegistry.cacheHits() + '/' + progressRegistry.cacheMisses());
 
 		if (!isAllWorkDone) {
 			setTimeout(checkForCompletion, 1000, entities, rootId, progressRegistry);

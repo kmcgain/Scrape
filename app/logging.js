@@ -1,3 +1,4 @@
+console.log('loading logging');
 var logger = null;
 var winston = require('winston');
 var logger = new (winston.Logger)({
