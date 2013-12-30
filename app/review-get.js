@@ -6,6 +6,10 @@ var pageLoader = require('./pageLoader');
 var deferred = deferWorkLib.deferred;
 var promisify = deferred.promisify;
 
+function deRef(str) {
+	return (str + ' ').substring(0, str.length);
+}
+
 exports.getReviewDetails = function getReviewDetails(hotelLocationId, hotelId, reviewIds, hotelRegistry) {
 	if (reviewIds.length == 0) {
 		return deferred(0);
@@ -35,9 +39,9 @@ exports.getReviewDetails = function getReviewDetails(hotelLocationId, hotelId, r
 			}
 
 			hotelRegistry.setReviewDetails(hotelId, reviewId, {
-				message: reviewSelector.find('.entry').text(),
-				rating: parseFloat(reviewSelector.find('.sprite-ratings').attr('content')),
-				quote: reviewSelector.find('.quote a').text(),
+				message: deRef(reviewSelector.find('.entry').text()),
+				rating: deRef(parseFloat(reviewSelector.find('.sprite-ratings').attr('content'))),
+				quote: deRef(reviewSelector.find('.quote a').text()),
 			});
 		});		
 
