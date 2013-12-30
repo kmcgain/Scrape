@@ -7,6 +7,10 @@ var logger = require('./logging');
 
 http.globalAgent.maxSockets = 100;
 
+function deRef(str) {
+	return (str + ' ').substring(0, str.length);
+}
+
 function loadResponse(def, retry, href) {
 	return function loadResponseClosure(resp) {
 		if (resp.statusCode != 200) {
@@ -20,7 +24,7 @@ function loadResponse(def, retry, href) {
 		});
 
 		resp.on('end', function() {
-			def.resolve(respParts.join(''));
+			def.resolve(deRef(respParts.join('')));
 		});
 	};
 }
