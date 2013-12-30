@@ -36,6 +36,7 @@ function testNoTimeout() {
 		d2 = deferred(),
 		d3 = deferred();
 
+	debugger;
 	assertLoad(cr, d1, 1);
 	assertLoad(cr, d2, 2);
 	assertLoad(cr, d3, 1);

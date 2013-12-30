@@ -24,8 +24,9 @@ exports.getReviewDetails = function getReviewDetails(hotelLocationId, hotelId, r
 	pageLoader.load(href)
 	.then(function reviewPageLoaded(body) {		
 		var $ = cheerio.load(body);
-
+		debugger;
 		reviewIds.forEach(function eachReview(reviewId) {
+			debugger;
 			var reviewSelector = $('#expanded_review_' + reviewId);
 
 			if (reviewSelector.length != 1) {

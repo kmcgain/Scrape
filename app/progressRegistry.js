@@ -3,12 +3,12 @@ var promisify = deferred.promisify;
 var deferWork = require('./deferWork').deferWork;
 var CacheRegistry = require('./cacheRegistry');
 
-var cacheDropTimeoutPeriodInMs = 5000;
+var cacheDropTimeoutPeriodInMs = 10000;
 
 var logger = require('./logging');
 
 module.exports = function(tripRepository, hotelRegistry) {
-	var cacheRegistry = new CacheRegistry(tripRepository);
+	var cacheRegistry = new CacheRegistry(tripRepository, {timeout: cacheDropTimeoutPeriodInMs});
 
 
 

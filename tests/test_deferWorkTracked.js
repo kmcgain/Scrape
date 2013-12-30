@@ -2,13 +2,13 @@ var deferWork = require('../app/deferWork');
 var assert = require('node-assertthat');
 var deferred = require('deferred');
 
-var deferPreTrack = new deferWork.trackedDeferred();
+var deferPreTrack = new deferWork.deferred();
 assert.that(deferWork.currentUnresolved().length, is.equalTo(0));
 deferPreTrack.resolve();
 deferPreTrack.promise.done();
 
 deferWork.enableTracking();
-var defer = new deferWork.trackedDeferred();
+var defer = new deferWork.deferred();
 assert.that(deferWork.currentUnresolved().length, is.equalTo(1));
 
 defer.resolve(10);
@@ -23,13 +23,13 @@ defer.promise.then(function(resolution) {
 var count = 0;
 var inc = function(resolution){count += resolution};
 
-deferWork.trackedMap([deferWork.deferWork(function(){return deferred(1);}, inc),deferWork.deferWork(function(){return deferred(3);}, inc)])
+deferWork.map([deferWork.deferWork(function(){return deferred(1);}, inc),deferWork.deferWork(function(){return deferred(3);}, inc)])
 .then(function () {
 	assert.that(count, is.equalTo(4));
 })
 .done();
 
-deferWork.trackedReduce([deferred(1), deferred(2), deferred(3)], function(accum, item) {
+deferWork.reduce([deferred(1), deferred(2), deferred(3)], function(accum, item) {
 	return accum + item;
 }, 10)
 .then(function(result) {

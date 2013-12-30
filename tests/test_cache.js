@@ -1,4 +1,4 @@
-var registry = require('../app/cache');
+	var registry = require('../app/cache');
 var Cache = registry.Cache;
 var assert = require('node-assertthat');
 var deferred = require('deferred');
@@ -39,6 +39,7 @@ function dontAddTwice() {
 };
 
 function ignoreAddTwice() {
+	debugger;
 	var cr = new Cache();
 	cr.addItem(1, 1);
 	assert.that(cr.getItem(1).item, is.equalTo(1));
@@ -110,36 +111,6 @@ function cacheSetupLockingPolicy() {
 	assert.that(advanced, is.true());
 }
 
-// Not a valid test as we don't lock on add, need to rewrite
-// function cacheLockingPolicy() {
-// 	var isFirstTime = true,
-// 		wasRejected = false,
-// 		didFinish = false;
-
-// 	var myPolicy = {func: function(value, prev, next) {
-// 		if (isFirstTime) {
-// 			isFirstTime = false;
-// 			next(value);
-// 		}
-// 		else {
-// 			wasRejected = true;
-// 			value.lockCount--;
-// 			next(value);
-// 		}
-// 	}}
-
-// 	var finishPolicy = {func: function(value, prev, next) {
-// 		didFinish = true;
-// 	}}
-
-// 	var cr = new Cache({
-// 		policy: registry.createPolicyChain([cachePolicy.lockSetupPolicy(), myPolicy, cachePolicy.lockCheckPolicy(), finishPolicy])
-// 	});
-
-// 	cr.addItem(1, 2);
-// 	assert.that(wasRejected, is.true());
-// }
-
 function cacheChain() {
 	var collectedItem = null;
 	var seenTwo = false;
@@ -167,7 +138,6 @@ function cacheChain() {
 
 	var four = {func: function(value, prev, next) {
 		collectedItem = value;
-		//assert.that(next, is.null()); TODO: how to assert this?
 		assert.that(prev, is.not.null());
 	}}
 
@@ -196,13 +166,6 @@ function getBySignature() {
 	var test4 = cr.getBySignature({other: 2, another: 3});
 	assert.that(test4.length, is.equalTo(1));
 	assert.that(test4[0].id, is.equalTo(3));
-
-	// var test4 = cr.getBySignature({another: {test: 4}});
-	// assert.that(test4.length, is.equalTo(1));
-	// assert.that(test4[0].id, is.equalTo(4));
-
-	// var test5 = cr.getBySignature({another: {test: 5}});
-	// assert.that(test5.length, is.equalTo(0));
 }
 
 addItem();
@@ -213,6 +176,5 @@ cacheTimeoutPolicy();
 cachePersistentTimeoutPolicyWithModification();
 cachePersistentTimeoutPolicyWithoutModification();
 cacheSetupLockingPolicy();
-//cacheLockingPolicy();
 cacheChain();
 getBySignature();

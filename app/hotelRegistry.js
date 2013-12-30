@@ -4,7 +4,7 @@ var CacheRegistry = require('./cacheRegistry');
 var logger = require('./logging');
 
 module.exports = function(hotelRepository, progressRegistry) {
-	var cacheRegistry = new CacheRegistry(hotelRepository);
+	var cacheRegistry = new CacheRegistry(hotelRepository, {timeout:10000});
 
 	var createHotel = function(locationId, parentProgressId) {
 		if (!parentProgressId) {
@@ -48,17 +48,35 @@ module.exports = function(hotelRepository, progressRegistry) {
 			throw new Error('reviews must be an initialised array');
 		}
 
+		var def = deferred();
 		loadHotel(hotelId)
 		.then(function(hotel){	
 			if (!hotel) {
 				throw new Error('The hotel did not load correctly');
 			}
 
+			reviews.forEach(function(rev) {savedReviewHotels[rev.Id] = hotel});			
+
 			hotel.Reviews = hotel.Reviews.concat(reviews);
 			hotel.hasPendingChanges = true;
-			cacheRegistry.unlock(hotelId);				
+			cacheRegistry.unlock(hotelId);	
+			def.resolve();			
 		})
 		.done();
+
+		return def.promise;
+	};
+
+	ext.createReview = function createReview(hotelId, reviewId) {
+		var review = new Review(reviewId);
+		savedReviewHotels[reviewId] = review;
+
+		var def = deferred();
+		this.addReviews(hotelId, [review])
+		.then(function() {
+			def.resolve(reviewId);
+		}).done();
+		return def.promise;
 	};
 
 	ext.setTitle = function(hotelId, title) {
@@ -98,25 +116,19 @@ module.exports = function(hotelRepository, progressRegistry) {
 		.done();
 	};
 
-	ext.createReview = function createReview(hotelId, reviewId) {
-		var def = deferred();
 
-		loadHotel(hotelId)
-		.then(function(hotel) {
-			var review = new Review(reviewId);
-			hotel.Reviews.push(review);
-			def.resolve(review.Id);
-			cacheRegistry.unlock(hotelId);
-		})
-		.done();
-
-		return def.promise;
-	};
+	var savedReviewHotels = {};
 
 	ext.setReviewDetails = function setReviewDetails(hotelId, reviewId, details) {
 		loadHotel(hotelId)
 		.then(function(hotel) {				
-			var review = hotel.Reviews.single(function(review) {return review.Id == reviewId;});
+			var review = null;
+			try {
+				review = hotel.Reviews.single(function(review) {return review.Id == reviewId;});
+			} catch(e) {
+				debugger;
+				throw e;
+			}
 			review.Message = details.message;
 			review.Rating = details.rating;
 			review.Quote = details.quote;	
@@ -127,6 +139,10 @@ module.exports = function(hotelRepository, progressRegistry) {
 			cacheRegistry.unlock(hotelId);			
 		})
 		.done();
+	};
+
+	ext.isFinishedWriting = function isFinishedWriting() {
+		return cacheRegistry.size() == 0;
 	};
 
 	function allReviewsFinished(hotel) {

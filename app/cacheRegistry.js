@@ -2,8 +2,9 @@ var cacheLib = require('./cache');
 var cachePolicy = require('./cachePolicy');
 var Cache = cacheLib.Cache;
 var deferred = require('deferred');
+var locking = require('./locking');
 
-var CacheRegistry = function(repository, options) {
+var CacheRegistry = function(repository, options) {	
 	var timeout = (options && options.timeout) ? options.timeout : 1000;
 
 	var chain = [];
@@ -16,6 +17,7 @@ var CacheRegistry = function(repository, options) {
 	}
 
 	var cache = new Cache({policy: cacheLib.createPolicyChain(chain, options ? options.debugOut : null)});
+	var self = this;
 
 	this.isCached = function(id) {
 		return cache.hasItem(id);
@@ -40,39 +42,42 @@ var CacheRegistry = function(repository, options) {
 		cache.addItem(id, value);
 	}
 
-	this.load = function(id, options) {
-		if (cache.hasItem(id)) {
-			this.hits++;
-			var item = cache.getItem(id);
+	this.load = function(id, options) {		
+		return locking.getLock(id, function loadLockObtained(def) {
+			if (cache.hasItem(id)) {
+				self.hits++;
+				var item = cache.getItem(id);
 
-			if (!options || !options.noCache) {
-				item.lockCount++; // lock it on every load. TODO: Can this be part of the chain??
+				if (!options || !options.noCache) {
+					item.lockCount++; // lock it on every load. TODO: Can this be part of the chain??
+				}
+
+				def.resolve(item.item);
+				return;
 			}
 
-			return deferred(item.item);
-		}
+			self.misses++;
 
-		this.misses++;
+			repository.findById(id, function(err, loadedItem) {
+				if (cache.hasItem(id)) {
+					throw new Error("locking didn't work");
+				}
 
-		var d1 = deferred();
+				if (err) {
+					throw new Error(err);
+				}
+				if (loadedItem == null) {
+					throw new Error('could not load by id: ' + id);
+				}
 
-		repository.findById(id, function(err, loadedItem) {
-			if (err) {
-				throw new Error(err);
-			}
-			if (loadedItem == null) {
-				throw new Error('could not load by id: ' + id);
-			}
+				if (!options || !options.noCache) {
+					cache.addItemIfNotExist(id, loadedItem);
+					cache.getItem(id).lockCount++;
+				}
 
-			if (!options || !options.noCache) {
-				cache.addItemIfNotExist(id, loadedItem);
-				cache.getItem(id).lockCount++;
-			}
-
-			d1.resolve(loadedItem);
+				def.resolve(loadedItem);
+			});
 		});
-
-		return d1.promise;
 	};
 
 	this.loadBy = function(signature) {	
@@ -95,9 +100,19 @@ var CacheRegistry = function(repository, options) {
 				}
 				else {
 					var loadedItem = loadedItems[0];
-					cache.addItemIfNotExist(loadedItem._id, loadedItem)
-					cache.getItem(loadedItem._id).lockCount++;
-					def.resolve(loadedItem);
+
+					// Unfortunately in order to use a lock correctly we need to reload :(
+					// if we make ues of loadedItem we aren't gauranteed to be consistent with
+					// the locking
+					self.load(loadedItem._id)
+					.then(function(item) {
+						def.resolve(item);
+					})
+					.done();
+
+					// cache.addItemIfNotExist(loadedItem._id, loadedItem)
+					// cache.getItem(loadedItem._id).lockCount++;
+					// def.resolve(loadedItem);
 				}
 			})
 		}

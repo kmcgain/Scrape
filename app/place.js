@@ -1,21 +1,21 @@
 "use strict";
 
-var cheerio = require('cheerio');
+var cheerio = require("cheerio");
 
-var defWorkLib = require('./deferWork');
+var defWorkLib = require("./deferWork");
 var deferred = defWorkLib.deferred;
 var deferWork = defWorkLib.deferWork;
 var mapSyncronously = defWorkLib.mapSyncronously;
-var Review = require('./review').Review;
-var getReviewDetails = require('./review-get').getReviewDetails;
-var url = require('url');
-var trip = require('./Trip');
-var Hotel = require('./hotel').Hotel;
+var Review = require("./review").Review;
+var getReviewDetails = require("./review-get").getReviewDetails;
+var url = require("url");
+var trip = require("./Trip");
+var Hotel = require("./hotel").Hotel;
 var deferred = defWorkLib.deferred;
 var mapDeferred = defWorkLib.map;
-require('./arrayExt');
+require("./arrayExt");
 
-var pageLoader = require('./pageLoader');
+var pageLoader = require("./pageLoader");
 
 var promisify = deferred.promisify;
 
@@ -53,8 +53,9 @@ function continueLoading(href, progressId) {
 	pageLoader.load(href)
 	.then(function pageLoaded(body) {
 		exports.loadTracker.endPageLoad(pageLoadId);
-		handleResponse(body, href, progressId);
-		def.resolve();
+		handleResponse(body, href, progressId)
+		.then(def.resolve)
+		.done();
 	})
 	.done();
 
@@ -71,34 +72,39 @@ function handleResponse(body, href, progressId) {
 	// Process the reviews without the use of a new queue job
 	if (href.match(/\/Hotel_Review/)) {
 		// TODO: make this align with the other cases so we can refactor.	
-		console.log('processing child ' + href);	
-		processChildHotel(progressId, href, $)
-		.then(function childHotelProcessed() {
-			//progressRegistry.markAsComplete(progressId);
-		})
-		.done();	
-		
-		return;
+		console.log('processing child ' + href);
+
+		var allReviewIds = [];
+		$('#REVIEWS .reviewSelector').each(function() {
+			allReviewIds.push(this.attr('id'));
+		});
+		var hotelInfo = {
+			allReviewIds: allReviewIds,
+			hotelTitle: $('#HEADING').text().trim(),
+			pageCount: $('.pagination .pgCount').text(),
+		};
+
+		return processChildHotel(progressId, href, hotelInfo);
 	}
 	
 	if (href.match(/\/Tourism-/)) {
 		var viewHotels = $('#HSCS_SEE_ALL');
 
-		selecter = viewHotels.length == 0 
+		selecter = viewHotels.length === 0 
 			? $('.lodging .summaryLink')
 			: viewHotels;			
 
-		if (selecter.length == 0) {
+		if (selecter.length === 0) {
 			// No hotels for this location
 			progressRegistry.markAsComplete(progressId);
-			return; 
+			return deferred(0); 
 		}
 	}
 	else if (href.match(/\/Hotels-/)) {			
 		selecter = $('#ACCOM_OVERVIEW .listing .property_title');
 	}
 	else if (href.match(/\/AllLocations-/)) {
-		selecter = $('#BODYCON table td a');				
+		selecter = $('#BODYCON table td a');
 	}
 	
 	else {
@@ -110,7 +116,8 @@ function handleResponse(body, href, progressId) {
 	progressRegistry.setNumberOfExpectedChildren(childHrefs.length, progressId);		
 
 	// Here we will resolve immediatelly after queuing more work
-	processChildren(childHrefs, progressId);		
+	processChildren(childHrefs, progressId);	
+	return deferred(0);	
 }
 
 function placeWorkerFunction(err, workItem, def) {
@@ -129,12 +136,18 @@ function processChildren(childHrefs, progressId) {
 		throw new Error('The worker queue has not been initialised');
 	}
 
-	exports.workerQueue.push(workData, placeWorkerFunction);
+	addWorkItem(workData, placeWorkerFunction);	
 }
 
-function processChildHotel(href, progressId, $) {
+function addWorkItem(data, cb) {
+	data.forEach(function(item) {
+		exports.workerQueue.unshift({data: item, workerFunc: cb}, null);
+	});	
+}
+
+function processChildHotel(href, progressId, hotelInfo) {
 	return processChild(progressId, href, function childHotelProcessed(absHref, prog) {
-		return processHotel(absHref, prog, $);
+		return processHotel(absHref, prog, hotelInfo);
 	});
 }
 
@@ -182,7 +195,7 @@ function processChild(href, progressId, childProcessor) {
 	return def.promise;
 }
 
-function processHotel(href, progressId, $) {
+function processHotel(href, progressId, hotelInfo) {
 	if (exports.logger) {
 		progressRegistry.getUrl(progressId)
 		.then(function gotUrl(url) {
@@ -206,10 +219,8 @@ function processHotel(href, progressId, $) {
 		idForHotel = hotelId;
 
 		var reviewIdPromises = [];
-		$('#REVIEWS .reviewSelector').each(function() {
-			var elem = this;	
-
-			var reviewIdPromise = hotelRegistry.createReview(hotelId, this.attr('id').match(/review_(.*)/)[1]);			
+		hotelInfo.allReviewIds.forEach(function(reviewId) {
+			var reviewIdPromise = hotelRegistry.createReview(hotelId, reviewId.match(/review_(.*)/)[1]);			
 			reviewIdPromises.push(reviewIdPromise);			
 		});
 
@@ -222,7 +233,6 @@ function processHotel(href, progressId, $) {
 			mapDeferred(reviewIdPromises)
 			.then(function(reviewIds) {
 				exports.logger.verbose('Hotel review count: ' + reviewIds.length + ' for hotel: ' + href);
-
 				getReviewDetails(hotelLocationId, hotelId, reviewIds, hotelRegistry)
 				.then(function() {
 					getReviewsDef.resolve();
@@ -242,10 +252,10 @@ function processHotel(href, progressId, $) {
 			return mapDeferred(reviewPromises);
 		}
 
-		hotelRegistry.setTitle(hotelId, $('#HEADING').text().trim());
+		hotelRegistry.setTitle(hotelId, hotelInfo.hotelTitle);
 
 		// page the reviews
-		var pageCountTxt = $('.pagination .pgCount').text();
+		var pageCountTxt = hotelInfo.pageCount;
 		var pcMatch = pageCountTxt.match(/1-\d+ of ([\d,]+) review/);
 
 		if (!pcMatch || pcMatch.length == 0) {
@@ -265,8 +275,8 @@ function processHotel(href, progressId, $) {
 		for (var i = 10; i < totalNumberOfReviews; i += 10) {
 			var reviewHref = getReviewPageRef(href, i);
 
-			var work = {progressId: progressId, href: reviewHref, hotelId: hotelId};
-			module.exports.workerQueue.push(work, placeWorkerFunction);
+			var work = [{progressId: progressId, href: reviewHref, hotelId: hotelId}];
+			addWorkItem(work, placeWorkerFunction);			
 		}
 
 		return mapDeferred(reviewPromises);

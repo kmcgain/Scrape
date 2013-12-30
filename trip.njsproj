@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{4503ddb4-9930-4f30-9651-ffa2fb9d37ca}</ProjectGuid>
+    <ProjectHome />
+    <ProjectView>ShowAllFiles</ProjectView>
+    <StartupFile>app\scrape.js</StartupFile>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{3AF33F2E-1136-4D97-BBB7-1795711AC8B8};{349c5851-65df-11da-9384-00065b846f21};{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}</ProjectTypeGuids>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <ItemGroup>
+    <Content Include="deplist.txt" />
+    <Content Include="index.html" />
+    <Content Include="package.json" />
+    <Content Include="README.md" />
+    <Compile Include="app\arrayExt.js" />
+    <Compile Include="app\cache.js" />
+    <Compile Include="app\cachePolicy.js" />
+    <Compile Include="app\cacheRegistry.js" />
+    <Compile Include="app\checkProgress.js" />
+    <Compile Include="app\clear-db.js" />
+    <Compile Include="app\deferWork.js" />
+    <Compile Include="app\hotel.js" />
+    <Compile Include="app\hotelRegistry.js" />
+    <Compile Include="app\logging.js" />
+    <Compile Include="app\pageLoader.js" />
+    <Compile Include="app\place.js" />
+    <Compile Include="app\progress-reporter.js" />
+    <Compile Include="app\progressRegistry.js" />
+    <Compile Include="app\promisify_test.js" />
+    <Compile Include="app\repository.js" />
+    <Compile Include="app\review-get.js" />
+    <Compile Include="app\review.js" />
+    <Compile Include="app\scrape.js" />
+    <Compile Include="app\server.js" />
+    <Compile Include="app\string-extensions.js" />
+    <Compile Include="app\trip-document-manager.js" />
+    <Compile Include="app\trip-schemas-in-memory.js" />
+    <Compile Include="app\trip-schemas.js" />
+    <Compile Include="app\Trip.js" />
+    <Compile Include="app\tripRegistry.js" />
+    <Compile Include="integration\test_findMongo.js" />
+    <Compile Include="integration\test_Review.js" />
+    <Compile Include="performance\memory_registry.js" />
+    <Compile Include="tests\test_cache.js" />
+    <Compile Include="tests\test_cacheRegistry.js" />
+    <Compile Include="tests\test_cleanComplete.js" />
+    <Compile Include="tests\test_deferredWork.js" />
+    <Compile Include="tests\test_deferWorkSync.js" />
+    <Compile Include="tests\test_deferWorkTracked.js" />
+    <Compile Include="tests\test_docMapping.js" />
+    <Compile Include="tests\test_progress-reporter.js" />
+    <Compile Include="tests\test_review-get.js" />
+    <Compile Include="tests\test_trip-document-manager.js" />
+    <Compile Include="tests\test_trip-registry.js" />
+    <Compile Include="tests\test_Trip.js" />
+    <Content Include=".openshift\action_hooks\README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include=".openshift\" />
+    <Folder Include=".openshift\action_hooks" />
+    <Folder Include="app" />
+    <Folder Include="integration" />
+    <Folder Include="performance" />
+    <Folder Include="tests" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <Import Project="$(VSToolsPath)\Node.js Tools\Microsoft.NodejsTools.targets" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>False</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>0</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:48022/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>True</UseCustomServer>
+          <CustomServerUrl>http://localhost:1337</CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}" User="">
+        <WebProjectProperties>
+          <StartPageUrl>
+          </StartPageUrl>
+          <StartAction>CurrentPage</StartAction>
+          <AspNetDebugging>True</AspNetDebugging>
+          <SilverlightDebugging>False</SilverlightDebugging>
+          <NativeDebugging>False</NativeDebugging>
+          <SQLDebugging>False</SQLDebugging>
+          <ExternalProgram>
+          </ExternalProgram>
+          <StartExternalURL>
+          </StartExternalURL>
+          <StartCmdLineArguments>
+          </StartCmdLineArguments>
+          <StartWorkingDirectory>
+          </StartWorkingDirectory>
+          <EnableENC>False</EnableENC>
+          <AlwaysStartWebServerOnDebug>False</AlwaysStartWebServerOnDebug>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

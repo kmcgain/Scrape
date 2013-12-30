@@ -21,11 +21,20 @@ var getReview = proxyquire('../app/review-get', {
 })
 .getReviewDetails;
 
-var review = {Id: '17137387'};
-getReview({LocationId: 'g2708206-d1086922'}, [review])
+
+var collectedReview;
+var hotelRegistry = {
+	setReviewDetails: function(hotelId, reviewId, review) {
+		debugger;
+		collectedReview = review;
+	}
+};
+
+var reviewId = '17137387';
+getReview({LocationId: 'g2708206-d1086922'}, null, [reviewId], hotelRegistry)
 .then(function () {
-	assert.that(review.Message, is.equalTo('SomeMessage'));
-	assert.that(review.Rating, is.equalTo(4.0));
-	assert.that(review.Quote, is.equalTo("\"TheQuote\""));
+	assert.that(collectedReview.message, is.equalTo('SomeMessage'));
+	assert.that(collectedReview.rating, is.equalTo(4.0));
+	assert.that(collectedReview.quote, is.equalTo("\"TheQuote\""));
 })
 .done();

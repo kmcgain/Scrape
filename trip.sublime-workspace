@@ -4,6 +4,38 @@
 		"selected_items":
 		[
 			[
+				"rev",
+				"reviewId"
+			],
+			[
+				"tot",
+				"totalNumberOfReviews"
+			],
+			[
+				"pare",
+				"parent"
+			],
+			[
+				"childh",
+				"childHotelPr"
+			],
+			[
+				"child",
+				"childHotelPr"
+			],
+			[
+				"childH",
+				"childHotelPrs"
+			],
+			[
+				"load",
+				"loadedItem"
+			],
+			[
+				"hote",
+				"hotelId"
+			],
+			[
 				"dir",
 				"directions"
 			],
@@ -46,10 +78,6 @@
 			[
 				"cac",
 				"cacheRegistry"
-			],
-			[
-				"load",
-				"loadedItems"
 			],
 			[
 				"cach",
@@ -164,10 +192,6 @@
 				"progressId"
 			],
 			[
-				"child",
-				"childCompletions"
-			],
-			[
 				"pa",
 				"parentId"
 			],
@@ -178,10 +202,6 @@
 			[
 				"prg",
 				"progressId"
-			],
-			[
-				"pare",
-				"parentId"
 			],
 			[
 				"addToC",
@@ -296,10 +316,6 @@
 				"tripDocumentManager"
 			],
 			[
-				"rev",
-				"reviewHref"
-			],
-			[
 				"pror",
 				"progressObj"
 			],
@@ -363,190 +379,17 @@
 	},
 	"buffers":
 	[
-		{
-			"contents": "var deferred = require('deferred');\nvar Review = require('./review').Review;\nvar CacheRegistry = require('./cacheRegistry');\n\nmodule.exports = function(hotelRepository) {\n	var cacheRegistry = new CacheRegistry(hotelRepository);\n\n	var createHotel = function(locationId) {\n		var hotel = new hotelRepository();\n		hotel.LocationId = locationId;\n		hotel.Reviews = [];\n		cacheRegistry.add(hotel._id, hotel);\n		\n		return hotel;\n	};\n\n	var loadHotel = function(id) {\n		return cacheRegistry.load(id);\n	};\n\n	var ext = {\n		getHotelByLocationId: function(locationId) {\n			var def = deferred();\n\n			cacheRegistry.loadBy({LocationId: locationId})\n			.then(function(hotel) {\n				if (hotel == null) {\n					def.resolve(createHotel(locationId));\n				}\n				else {\n					// TODO: We are exposing the hotel!\n					cacheRegistry.unlock(hotel.id);\n					def.resolve(hotel);\n				}\n			})\n			.done();\n\n			return def.promise;\n		},	\n\n		getHotelById: loadHotel,\n\n		addReviews: function(hotelId, reviews) {\n			if (!reviews) {\n				throw new Error('reviews must be an initialised array');\n			}\n\n			loadHotel(hotelId)\n			.then(function(hotel){	\n				if (!hotel) {\n					throw new Error('The hotel did not load correctly');\n				}\n\n				hotel.Reviews = hotel.Reviews.concat(reviews);\n				hotel.hasPendingChanges = true;\n				cacheRegistry.unlock(hotelId);				\n			})\n			.done();\n		},\n\n		setTitle: function(hotelId, title) {\n			loadHotel(hotelId) \n			.then(function(hotel) {\n				hotel.Title = title;\n				hotel.hasPendingChanges = true;\n				cacheRegistry.unlock(hotelId);\n			})\n			.done();\n		},\n\n		markAsComplete: function(hotelId) {\n			loadHotel(hotelId) \n			.then(function(hotel) {\n				hotel.IsComplete = true;\n				hotel.hasPendingChanges = true;\n				hotel.save(function() {/*TODO*/});\n			})\n			.done();\n		},\n\n		setNumberOfExpectedReviews: function setNumberOfExpectedChildren(hotelId, numberOfExpectedReviews) {\n			loadHotel(hotelId)\n			.then(function(hotel) {\n				hotel.NumberOfExpectedReviews = numberOfExpectedReviews;\n				hotel.hasPendingChanges = true;\n				hotel.save(function() {});\n			})\n			.done();\n		},\n\n		createReview: function createReview(hotelId, reviewId) {\n			var def = deferred();\n\n			loadHotel(hotelId)\n			.then(function(hotel) {\n				var review = new Review(reviewId);\n				hotel.Reviews.push(review);\n				def.resolve(review.Id);\n			})\n			.done();\n\n			return def.promise;\n		},\n\n		setReviewDetails: function setReviewDetails(hotelId, reviewId, details) {\n			console.log('setting review details ' + reviewId);\n			loadHotel(hotelId)\n			.then(function(hotel) {				\n				var review = hotel.Reviews.single(function(review) {return review.Id == reviewId});\n				review.Message = details.message;\n				review.Rating = details.rating;\n				review.Quote = details.quote;		\n				\n				hotel.save(function() {\n					console.log('hotel saved with review ' + reviewId);\n					if ((hotel.Reviews.length == hotel.NumberOfExpectedReviews) && allReviewsFinished(hotel)) {\n						console.log('reviews done');\n						self.markAsComplete(hotelId);\n					}		\n				});			\n			})\n			.done();\n		},\n	}\n\n	function allReviewsFinished(hotel) {\n		return hotel.Reviews.filter(function(review) { return !review.Rating; }).length == 0;\n	}\n\n	return ext;\n}",
-			"file": "app/hotelRegistry.js",
-			"file_size": 3379,
-			"file_write_time": 130285436053912483,
-			"settings":
-			{
-				"buffer_size": 3181,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"contents": "sumOfInput = gets.split(',').map(&:to_i).inject(:+)\nputs sumOfInput",
-			"settings":
-			{
-				"buffer_size": 67,
-				"line_ending": "Windows",
-				"name": "sumOfInput = gets.split(',').map(&:to_i).inject(:+"
-			}
-		},
-		{
-			"file": "/C/Source/ruby/test2.rb",
-			"settings":
-			{
-				"buffer_size": 451,
-				"line_ending": "Windows",
-				"name": "gets.split(', ')"
-			}
-		},
-		{
-			"contents": "8, 4\n4,8,5,2,1,3,7\n\n8, 3\n3,6,1,5,2,7\n\n8 / 3 = 2 2/3\n\n1,2,3,4,5\n\n1 % 7\n\n\n\n1,2,3,4,5,6,7,8,9,10,11\n\n3,6,9\n\n2\n\n1,\n\n\nf(num, int) = \n\n",
-			"settings":
-			{
-				"buffer_size": 129,
-				"line_ending": "Windows",
-				"name": "8, 4"
-			}
-		},
-		{
-			"file": "/C/Source/ruby/test3.rb",
-			"settings":
-			{
-				"buffer_size": 2041,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/C/Source/ruby/test4.rb",
-			"settings":
-			{
-				"buffer_size": 2483,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"contents": "rslslssrr 		- TAGATC\nsslsllrrl 		- GAGATCGATCTCTATATC\nslslsslslrrr	- GATCGATCGAGATCGATCTATATA",
-			"settings":
-			{
-				"buffer_size": 93,
-				"line_ending": "Windows",
-				"name": "rslslssrr 		- TAGATC"
-			}
-		},
-		{
-			"contents": "def  find_binding_preference( enzyme_sequence) \n	indexOfEndOfLastPair = ((enzyme_sequence.length/2)*2-1)\n	enzymePairs = enzyme_sequence[0..indexOfEndOfLastPair]\n		.downcase\n		.scan(/.{2}/)\n		.reject {|pair| pair == 'aa'}\n\n	currentHeading = 0\n	firstHeading = 0\n	lastHeading = currentHeading	\n	enzymePairs\n		.each do |pair| \n			direction = duplet_to_amino_acid(pair[0], pair[1])[:direction]								\n			# if firstHeading == nil and direction == 's'\n			# 	direction = 'l'\n			# end\n\n			\n			currentHeading = heading(direction, currentHeading)\n			lastHeading = currentHeading\n			if firstHeading == nil\n				firstHeading = currentHeading\n			end\n	end\n\n	return binding_preference_from_ending_bond_heading(normaliseHeading(firstHeading - lastHeading)).upcase\nend",
-			"settings":
-			{
-				"buffer_size": 750,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"contents": "\n\n\n\n\ndef duplet_to_amino_acid(first_base, second_base)\n	lookup = {\n		a: { a: { acid: '', direction: '' }, c: { acid: 'cut', direction: 's' }, g: { acid: 'del', direction: 's' }, t: { acid: 'swi', direction: 'r' } },\n		c: { a: { acid: 'mvr', direction: 's' }, c: { acid: 'mvl', direction: 's' }, g: { acid: 'cop', direction: 'r' }, t: { acid: 'off', direction: 'l' } },\n		g: { a: { acid: 'ina', direction: 's' }, c: { acid: 'inc', direction: 'r' }, g: { acid: 'ing', direction: 'r' }, t: { acid: 'int', direction: 'l' } },\n		t: { a: { acid: 'rpy', direction: 'r' }, c: { acid: 'rpu', direction: 'l' }, g: { acid: 'lpy', direction: 'l' }, t: { acid: 'lpu', direction: 'l' } },\n	}\n	lookup[first_base.to_sym][second_base.to_sym]\nend\n\ndef binding_preference_from_ending_bond_heading(degrees_relative_to_starting_bond)\n	lookup = {d0: 'a', d90: 'g', d180: 't', d270: 'c'}\n	lookup[(\"d#{degrees_relative_to_starting_bond}\").to_sym]\nend\n\ndef heading(dir, currentHeading)\n	case dir\n	when 's'\n		currentHeading = currentHeading\n	when 'r'\n		currentHeading = currentHeading + 90\n	when 'l'\n		currentHeading = currentHeading - 90\n	end\n	\n	return normaliseHeading(currentHeading)\nend\n\ndef normaliseHeading(heading) \n	while (heading >= 360)\n		heading -= 360\n	end\n	while (heading < 0)\n		heading += 360\n	end\n\n	return heading	\nend\n\ndef  find_binding_preference( enzyme_sequence) \n	indexOfEndOfLastPair = ((enzyme_sequence.length/2)*2-1)\n	enzymePairs = enzyme_sequence[0..indexOfEndOfLastPair]\n		.downcase\n		.scan(/.{2}/)\n		.reject {|pair| pair == 'aa'}\n\n	currentHeading = 0\n	firstHeading = nil\n	lastHeading = currentHeading	\n	enzymePairs\n		.each do |pair| \n			direction = duplet_to_amino_acid(pair[0], pair[1])[:direction]								\n\n			lastHeading = currentHeading\n			currentHeading = firstHeading == nil ? 90 : heading(direction, currentHeading)\n			if firstHeading == nil\n				firstHeading = currentHeading\n			end\n	end\n\n	puts normaliseHeading(lastHeading - firstHeading)\n	return binding_preference_from_ending_bond_heading(normaliseHeading(lastHeading - firstHeading)).upcase\nend\n\nputs find_binding_preference(\"TA\") == 'C' ? 'success' : 'fail'\n\n#rslslssrr\nputs find_binding_preference(\"TAGATCCAGTCCACATCGA\") == 'C' ? 'success' : 'fail'\n#llls\nputs find_binding_preference(\"TCTCTCGA\") == 'T' ? 'success' : 'fail'\n#lslslssrr\nputs find_binding_preference(\"TCGATCCAGTCCACATCGA\") == 'C' ? 'success' : 'fail'\n#sslslssrr\nputs find_binding_preference(\"GAGATCCAGTCCACATCGA\") == 'C' ? 'success' : 'fail'\n#sslslsrrr\nputs find_binding_preference(\"CAGATCCAGTCCATATCGA\") == 'A' ? 'success' : 'fail'\n#rssslssrr\nputs find_binding_preference(\"TAGAGACAGTCCACATCGA\") == 'A' ? 'success' : 'fail'\n#rslslssrrrrll\nputs find_binding_preference(\"TAGATCCAGTCCACATCGAGAGATCTC\") == 'G' ? 'success' : 'fail'\n",
-			"settings":
-			{
-				"buffer_size": 2754,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"contents": "\n\n\n\n\ndef duplet_to_amino_acid(first_base, second_base)\n	lookup = {\n		a: { a: { acid: '', direction: '' }, c: { acid: 'cut', direction: 's' }, g: { acid: 'del', direction: 's' }, t: { acid: 'swi', direction: 'r' } },\n		c: { a: { acid: 'mvr', direction: 's' }, c: { acid: 'mvl', direction: 's' }, g: { acid: 'cop', direction: 'r' }, t: { acid: 'off', direction: 'l' } },\n		g: { a: { acid: 'ina', direction: 's' }, c: { acid: 'inc', direction: 'r' }, g: { acid: 'ing', direction: 'r' }, t: { acid: 'int', direction: 'l' } },\n		t: { a: { acid: 'rpy', direction: 'r' }, c: { acid: 'rpu', direction: 'l' }, g: { acid: 'lpy', direction: 'l' }, t: { acid: 'lpu', direction: 'l' } },\n	}\n	lookup[first_base.to_sym][second_base.to_sym]\nend\n\ndef binding_preference_from_ending_bond_heading(degrees_relative_to_starting_bond)\n	lookup = {d0: 'a', d90: 'g', d180: 't', d270: 'c'}\n	lookup[(\"d#{degrees_relative_to_starting_bond}\").to_sym]\nend\n\ndef heading(dir, currentHeading)\n	case dir\n	when 's'\n		puts 's'\n		currentHeading = currentHeading\n	when 'r'\n		puts 'r'\n		currentHeading = currentHeading + 90\n	when 'l'\n		puts 'l'\n		currentHeading = currentHeading - 90\n	end\n	\n	if currentHeading == 360\n		return 0\n	elsif currentHeading == -90\n		return 270\n	end\n\n	return currentHeading		\nend\n\ndef  find_binding_preference( enzyme_sequence) \n	indexOfEndOfLastPair = ((enzyme_sequence.length/2)*2-1)\n	enzymePairs = enzyme_sequence[0..indexOfEndOfLastPair]\n		.downcase\n		.scan(/.{2}/)\n		.reject {|pair| pair == 'aa'}\n\n	currentHeading = 0 # we start at 270 so our first direction of right results in 0 degrees\n\n	# last item does not need to be visited as we are only interested in last joining direction\n	firstTime = true\n	enzymePairs[0..-2]\n		.each do |pair| \n			if firstTime\n				firstTime = false\n				direction = 'r'\n			else\n				direction = duplet_to_amino_acid(pair[0], pair[1])[:direction]		\n				currentHeading = heading(direction, currentHeading)\n			end			\n	end\n\n	return binding_preference_from_ending_bond_heading(currentHeading).upcase\nend\n\n\nt1 = find_binding_preference(\"TAGATCCAGTCCACATCGA\")\nputs t1\nif (t1 != 'C')\n	puts 'fail'\nend",
-			"settings":
-			{
-				"buffer_size": 2111,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "app/pageLoader.js",
-			"settings":
-			{
-				"buffer_size": 1208,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "app/progressRegistry.js",
-			"settings":
-			{
-				"buffer_size": 5143,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "app/review-get.js",
-			"settings":
-			{
-				"buffer_size": 1343,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "app/place.js",
-			"settings":
-			{
-				"buffer_size": 7644,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "app/cacheRegistry.js",
-			"settings":
-			{
-				"buffer_size": 2596,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"contents": "Searching 26 files for \"debugger\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\cacheRegistry.js:\n   28  \n   29  	this.unlock = function(id) {\n   30: 		debugger;\n   31  		cache.getItem(id).lockCount--;\n   32  	}\n\nC:\\Source\\node\\trip\\app\\hotelRegistry.js:\n  112  			loadHotel(hotelId)\n  113  			.then(function(hotel) {\n  114: 				debugger;\n  115  				var review = new Review(reviewId);\n  116  				hotel.Reviews.push(review);\n\n2 matches across 2 files\n\n\nSearching 26 files for \"debugger\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\cachePolicy.js:\n   37  module.exports.lockCheckPolicy = function() { return {name: \"lockCheck\", func: function(value, prev, next) {\n   38  	if (value.lockCount > 0) {\n   39: 		debugger;\n   40  		prev(value);\n   41  		return;\n\n1 match in 1 file\n\n\nSearching 26 files for \"lockCount\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\cachePolicy.js:\n   27   */\n   28  module.exports.lockSetupPolicy = function() { return {name: \"lockSetup\", func: function(value, prev, next) {\n   29: 	if (!value.lockCount) {\n   30: 		value.lockCount = 0;\n   31  	}\n   32  	\n   ..\n   35  \n   36  module.exports.lockCheckPolicy = function() { return {name: \"lockCheck\", func: function(value, prev, next) {\n   37: 	if (value.lockCount > 0) {\n   38  		debugger;\n   39  		prev(value);\n\nC:\\Source\\node\\trip\\app\\cacheRegistry.js:\n   24  	this.isLocked = function(id) {\n   25  		var item = cache.getItem(id);\n   26: 		return item.lockCount && item.lockCount > 0;\n   27  	}\n   28  \n   29  	this.unlock = function(id) {		\n   30: 		cache.getItem(id).lockCount--;\n   31  	}\n   32  \n   ..\n   39  			this.hits++;\n   40  			var item = cache.getItem(id);\n   41: 			item.lockCount++; // lock it on every load. TODO: Can this be part of the chain??\n   42  \n   43  			return deferred(item.item);\n\n7 matches across 2 files\n\n\nSearching 26 files for \"load\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\cacheRegistry.js:\n   35  	}\n   36  \n   37: 	this.load = function(id, options) {\n   38  		if (cache.hasItem(id)) {\n   39  			this.hits++;\n   40  			var item = cache.getItem(id);\n   41: 			item.lockCount++; // lock it on every load. TODO: Can this be part of the chain??\n   42  \n   43  			return deferred(item.item);\n   ..\n   48  		var d1 = deferred();\n   49  \n   50: 		repository.findById(id, function(err, loadedItem) {\n   51  			if (err) {\n   52  				throw new Error(err);\n   ..\n   54  \n   55  			if (!options || !options.noCache && notAlreadyAdded) {\n   56: 				cache.addItemIfNotExist(id, loadedItem);\n   57  			}\n   58  \n   59: 			d1.resolve(loadedItem);\n   60  		});\n   61  \n\nC:\\Source\\node\\trip\\app\\hotelRegistry.js:\n   14  	};\n   15  \n   16: 	var loadHotel = function(id) {\n   17  		var def = deferred();\n   18  		hotelRepository.findById(id, function(err, hotel) {\n   ..\n   57  		},	\n   58  \n   59: 		getHotelById: loadHotel,\n   60  \n   61  		addReviews: function(hotelId, reviews) {\n   ..\n   64  			}\n   65  \n   66: 			loadHotel(hotelId)\n   67  			.then(function(hotel){	\n   68  				if (!hotel) {\n   69: 					throw new Error('The hotel did not load correctly');\n   70  				}\n   71  \n   ..\n   78  \n   79  		setTitle: function(hotelId, title) {\n   80: 			loadHotel(hotelId) \n   81  			.then(function(hotel) {\n   82  				hotel.Title = title;\n   ..\n   88  \n   89  		markAsComplete: function(hotelId) {\n   90: 			loadHotel(hotelId) \n   91  			.then(function(hotel) {\n   92  				hotel.IsComplete = true;\n   ..\n   98  \n   99  		setNumberOfExpectedReviews: function setNumberOfExpectedChildren(hotelId, numberOfExpectedReviews) {\n  100: 			loadHotel(hotelId)\n  101  			.then(function(hotel) {\n  102  				hotel.NumberOfExpectedReviews = numberOfExpectedReviews;\n  ...\n  110  			var def = deferred();\n  111  \n  112: 			loadHotel(hotelId)\n  113  			.then(function(hotel) {\n  114  				var review = new Review(reviewId);\n  ...\n  122  \n  123  		setReviewDetails: function setReviewDetails(hotelId, reviewId, details) {\n  124: 			loadHotel(hotelId)\n  125  			.then(function(hotel) {\n  126  				var review = hotel.Reviews.single(function(review) {return review.Id == reviewId});\n\nC:\\Source\\node\\trip\\app\\pageLoader.js:\n    8  http.globalAgent.maxSockets = 100;\n    9  \n   10: function loadResponse(def, retry, href) {\n   11: 	return function loadResponseClosure(resp) {\n   12  		if (resp.statusCode != 200) {\n   13  			console.log('Load error');\n   14: 			retry(new Error(\"We didn't get 200, we got \" + resp.statusCode + \" while loading \" + href)); \n   15  		}\n   16  \n   ..\n   27  \n   28  var exportObj = {\n   29: 	load: function load(href, errCount) {\n   30  		if (!errCount) {\n   31  			errCount = 0;\n   ..\n   45  			}\n   46  \n   47: 			exportObj.load(href, errCount)\n   48  			.then(function(body) {\n   49  				def.resolve(body);\n   ..\n   52  		}\n   53  \n   54: 		http.get(options, loadResponse(def, retry, href))\n   55  		.on(\"error\", retry);\n   56  \n\nC:\\Source\\node\\trip\\app\\place.js:\n   22  var $ = null;\n   23  \n   24: function loadPlace(href, progressId) {\n   25  	var def = deferred();\n   26  	// NOTE: This will prevent the change in data over time\n   ..\n   50  	\n   51  	var pageLoadId = {href: href, rand: Math.random()};\n   52: 	exports.loadTracker.newPageLoad(pageLoadId);\n   53: 	pageLoader.load(href)\n   54  	.then(function pageLoaded(body) {\n   55: 		exports.loadTracker.endPageLoad(pageLoadId);\n   56  		handleResponse(body, href, progressId);\n   57  		def.resolve();\n   ..\n   63  \n   64  function handleResponse(body, href, progressId) {\n   65: 	//exports.loadTracker.endPageLoad(href);\n   66  \n   67: 	$ = cheerio.load(body);\n   68  \n   69  	var selecter = null;\n   ..\n  170  				}\n  171  \n  172: 				loadPlace(absHref, newProgress)\n  173  				.then(def.resolve)\n  174  				.done();\n  ...\n  292  }\n  293  \n  294: exports.loadTrack = null;\n  295: exports.load = loadPlace;\n  296  exports.logger = null;\n  297  exports.workerQueue = null;\n\nC:\\Source\\node\\trip\\app\\progressRegistry.js:\n   36  		if (parentId) {\n   37  			return deferWork(function() {\n   38: 				return cacheRegistry.load(parentId);\n   39  			}, function(parent) {\n   40  				\n   ..\n   86  		},\n   87  \n   88: 		isComplete: function(id, loadOptions) {\n   89  			return deferWork(function() {\n   90: 				return cacheRegistry.load(id, loadOptions);\n   91  			}, function(item) {\n   92: 				if (!loadOptions || !loadOptions.noCache) {\n   93  					cacheRegistry.unlock(id);\n   94  				}\n   ..\n  101  			logger.verbose('Marking complete: ' + id);\n  102  \n  103: 			cacheRegistry.load(id)\n  104  			.then(function(item) {\n  105  				cacheRegistry.unlock(id);\n  ...\n  119  			var def = deferred();\n  120  \n  121: 			cacheRegistry.load(parentId)\n  122  			.then(function(parent) {\n  123  				var hotelExists = !!(parent.Hotel);\n  ...\n  145  \n  146  		setNumberOfExpectedChildren: function(number, parentId) {\n  147: 			cacheRegistry.load(parentId)\n  148  			.then(function(parent) {\n  149  				parent.NumberOfExpectedChildren = number;	\n  ...\n  156  		getChildren: function(parentId) {\n  157  			return deferWork(function() {\n  158: 				return cacheRegistry.load(parentId);\n  159  			}, function(parent) {\n  160  \n  ...\n  169  		getUrl: function(progressId) {\n  170  			return deferWork(function() {\n  171: 				return cacheRegistry.load(progressId);\n  172  			}, function(progress) {\n  173  				cacheRegistry.unlock(progressId);\n  ...\n  180  				throw new Error(\"Href was not correct type\");\n  181  			}\n  182: 			// TODO: optimise by searching by href, don't load all children\n  183  			return deferWork(function() {\n  184: 				return deferred.map(children, function(child) {return cacheRegistry.load(child);});\n  185: 			}, function(loadedChildren) {\n  186  				children.forEach(function(childId){cacheRegistry.unlock(childId)});\n  187: 				return loadedChildren.filter(function(item){return item.Url == href})[0];\n  188  			});\n  189  		},\n  ...\n  202  					newProgress(url, null)\n  203  					.then(function(newId) {\n  204: 						return cacheRegistry.load(newId);\n  205  					})\n  206  					.then(function(item) {\n\nC:\\Source\\node\\trip\\app\\review-get.js:\n   21  			'&servlet=Hotel_Review&expand=1&extraad=true&extraadtarget=' + target;\n   22  \n   23: 	pageLoader.load(href)\n   24  	.then(function reviewPageLoaded(body) {		\n   25: 		var $ = cheerio.load(body);\n   26  \n   27  		reviewIds.forEach(function eachReview(reviewId) {\n   ..\n   29  \n   30  			if (reviewSelector.length != 1) {\n   31: 				console.log('problem with review download');\n   32  				throw new Error('Problem with review ' + reviewId);\n   33  			}\n\nC:\\Source\\node\\trip\\app\\scrape.js:\n   36  \n   37  place.logger = logger;\n   38: place.loadTracker = new function loadTracker() {\n   39  	var pageCount = 0;\n   40  \n   ..\n   61  	};\n   62  \n   63: 	var loads = new HashTable();\n   64  \n   65  	return {\n   66  		newPageLoad: function newPageLoad(href) {\n   67: 			loads.put(href, {startTime: process.hrtime()});\n   68  		},\n   69  \n   70  		endPageLoad: function endPageLoad(href) {\n   71: 			var item = loads.get(href);\n   72: 			loads.remove(href);\n   73  \n   74  			var diff = process.hrtime(item.startTime);\n   ..\n  152  	.then(function rootFound(rootData) {\n  153  		checkForCompletion(tripEntities, rootData.id, progressRegistry);\n  154: 		return place.load(rootData.href, rootData.id)		\n  155  	})\n  156  	.done();\n\nC:\\Source\\node\\trip\\app\\trip-schemas-in-memory.js:\n   54  	var hotelMongo = new mongo();\n   55  \n   56: 	console.log('repository loaded');\n   57  	var data = {\n   58  		TripMongo: tripMongo, HotelMongo: hotelMongo, closeRepository: function (cb) {cb();}\n   59  	};\n   60  \n   61: 	console.log('Promising to load the repository');\n   62  	return deferred(data);\n   63  };\n\nC:\\Source\\node\\trip\\app\\trip-schemas.js:\n   58  		};\n   59  \n   60: 		console.log('repository loaded');\n   61  		def.resolve({TripMongo: tripMongo, HotelMongo: hotelMongo, closeRepository: function (cb) {\n   62  			repository.connection.db.close(cb);\n   ..\n   65  	.done();\n   66  \n   67: 	console.log('Promising to load the repository');\n   68  	return def.promise;\n   69  };\n\nC:\\Source\\node\\trip\\app\\Trip.js:\n   76  	Progress.call(this);\n   77  	this.TripDoc_id = doc_id;\n   78: 	this.loadedProgress = null;	\n   79  	this.registry = tripRegistry;\n   80  }\n   ..\n   86  ProgressProxy.prototype.realise = function() {\n   87  	var self = this;\n   88: 	if (self.loadedProgress != null) {\n   89: 		return deferred(self.loadedProgress);\n   90  	}\n   91  \n   ..\n   93  		return self.registry.Load(self.TripDoc_id);\n   94  	}, function(doc) {\n   95: 		self.loadedProgress = lazyConvertDoc(doc, self.registry);	\n   96: 		return self.loadedProgress;\n   97  	});\n   98  }\n\n66 matches across 10 files\n\n\nSearching 26 files for \"addItemIfNot\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\cache.js:\n   28  	},\n   29  	\n   30: 	addItemIfNotExist: function(id, item, notAddedCB) {\n   31  		console.log('adding if not exist: ' + new Error().stack);\n   32  \n\nC:\\Source\\node\\trip\\app\\cacheRegistry.js:\n   64  \n   65  			if (!options || !options.noCache && notAlreadyAdded) {\n   66: 				cache.addItemIfNotExist(id, loadedItem, function() {\n   67  					cache.getItem(id).lockCount++;\n   68  				});\n\n2 matches across 2 files\n\n\nSearching 26 files for \"tes\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\cachePolicy.js:\n   11  module.exports.persistencePolicy = function() {\n   12  	return {name: \"persistence\", func: function(value, prev, next) {\n   13: 		console.log('tes');\n   14  		if (value.item.hasPendingChanges)\n   15  		{\n\nC:\\Source\\node\\trip\\app\\server.js:\n   28          if (typeof self.ipaddress === \"undefined\") {\n   29              //  Log errors on OpenShift but continue w/ 127.0.0.1 - this\n   30:             //  allows us to run/test the app locally.\n   31              console.warn('No OPENSHIFT_NODEJS_IP var, using 127.0.0.1');\n   32              self.ipaddress = \"127.0.0.1\";\n   ..\n   93       *  Create the routing table entries + handlers for the application.\n   94       */\n   95:     self.createRoutes = function() {\n   96:         self.routes = { };\n   97  \n   98:         // Routes for /health, /asciimo and /\n   99:         self.routes['/health'] = function(req, res) {\n  100              res.send('1');\n  101          };\n  102  \n  103:         self.routes['/asciimo'] = function(req, res) {\n  104              var link = \"http://i.imgur.com/kmbjB.png\";\n  105              res.send(\"<html><body><img src='\" + link + \"'></body></html>\");\n  106          };\n  107  \n  108:         self.routes['/'] = function(req, res) {\n  109              res.setHeader('Content-Type', 'text/html');\n  110              res.send(self.cache_get('index.html') );\n  ...\n  114  \n  115      /**\n  116:      *  Initialize the server (express) and create the routes and register\n  117       *  the handlers.\n  118       */\n  119      self.initializeServer = function() {\n  120:         self.createRoutes();\n  121          self.app = express.createServer();\n  122  \n  123:         //  Add handlers for the app (from the routes).\n  124:         for (var r in self.routes) {\n  125:             self.app.get(r, self.routes[r]);\n  126          }\n  127      };\n  ...\n  136          self.setupTerminationHandlers();\n  137  \n  138:         // Create the express server and routes.\n  139          self.initializeServer();\n  140      };\n\n14 matches across 2 files\n\n\nSearching 26 files for \"getBySignature\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\cache.js:\n   49  	},\n   50  \n   51: 	getBySignature: function(signature) {\n   52  		var result = [];\n   53  		for (var key in this.items) {		\n\n1 match in 1 file\n\n\nSearching 26 files for \"debugger\" (regex, case sensitive)\n\nC:\\Source\\node\\trip\\app\\cachePolicy.js:\n   35  module.exports.lockCheckPolicy = function() { return {name: \"lockCheck\", func: function(value, prev, next) {\n   36  	if (value.lockCount > 0) {\n   37: 		debugger;\n   38  		prev(value);\n   39  		return;\n\nC:\\Source\\node\\trip\\app\\cacheRegistry.js:\n   31  		var item = cache.getItem(id);\n   32  		if (!item.lockCount) {\n   33: 			debugger;\n   34  			throw new Error('bad unlock: ' + id + ' ' + item.lockCount);\n   35  		}\n\nC:\\Source\\node\\trip\\app\\hotelRegistry.js:\n  109  			loadHotel(hotelId)\n  110  			.then(function(hotel) {\n  111: 				debugger;\n  112  				var review = hotel.Reviews.single(function(review) {return review.Id == reviewId});\n  113  				review.Message = details.message;\n\n3 matches across 3 files\n",
-			"settings":
-			{
-				"buffer_size": 14346,
-				"line_ending": "Windows",
-				"name": "Find Results",
-				"scratch": true
-			}
-		},
-		{
-			"file": "app/cachePolicy.js",
-			"settings":
-			{
-				"buffer_size": 1136,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "app/scrape.js",
-			"settings":
-			{
-				"buffer_size": 4920,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "app/cache.js",
-			"settings":
-			{
-				"buffer_size": 2702,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "tests/test_cacheRegistry.js",
-			"settings":
-			{
-				"buffer_size": 4140,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "app/arrayExt.js",
-			"settings":
-			{
-				"buffer_size": 490,
-				"line_ending": "Windows"
-			}
-		}
 	],
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 173.0,
+		"height": 196.0,
 		"selected_items":
 		[
+			[
+				"ssjs",
+				"Set Syntax: JavaScript"
+			],
 			[
 				"jshi",
 				"JSHint"
@@ -554,10 +397,6 @@
 			[
 				"install",
 				"Package Control: Install Package"
-			],
-			[
-				"ssjs",
-				"Set Syntax: JavaScript"
 			],
 			[
 				"package",
@@ -597,39 +436,47 @@
 	},
 	"file_history":
 	[
-		"/C/Users/kym/Downloads/Enzyme-Binding-Preferences_testcases/output000.txt",
-		"/C/Users/kym/Downloads/Enzyme-Binding-Preferences_testcases/input000.txt",
+		"/C/Source/node/trip/app/place.js",
+		"/C/Users/kym/AppData/Roaming/Sublime Text 3/Packages/JSHint Gutter/.jshintrc",
+		"/C/Users/kym/AppData/Roaming/Sublime Text 3/Packages/JSHint Gutter/JSHint.sublime-settings",
+		"/C/Source/node/trip/app/review-get.js",
+		"/C/Source/node/trip/tests/test_review-get.js",
+		"/C/Source/node/trip/tests/test_cacheRegistry.js",
+		"/C/Source/node/trip/app/cacheRegistry.js",
 		"/C/Source/node/trip/tests/test_cache.js",
 		"/C/Source/node/trip/app/cache.js",
-		"/C/Source/node/trip/app/cacheRegistry.js",
-		"/C/Source/node/trip/app/cachePolicy.js",
-		"/C/Source/node/trip/app/review.js",
-		"/C/Source/node/trip/app/arrayExt.js",
+		"/C/Source/node/trip/app/logging.js",
 		"/C/Source/node/trip/app/scrape.js",
-		"/C/Source/node/trip/app/trip-schemas.js",
-		"/C/Source/node/trip/app/promisify_test.js",
-		"/C/Source/node/trip/app/trip-document-manager.js",
-		"/C/Source/node/trip/app/review-get.js",
-		"/C/Source/node/trip/app/place.js",
-		"/C/Source/node/trip/app/progressRegistry.js",
 		"/C/Source/node/trip/app/pageLoader.js",
 		"/C/Source/node/trip/app/hotelRegistry.js",
 		"/C/Source/node/trip/app/deferWork.js",
+		"/C/Source/node/trip/tests/test_locking.js",
+		"/C/Source/node/trip/app/progressRegistry.js",
+		"/C/Source/node/trip/app/cachePolicy.js",
+		"/C/Source/node/trip/app/locking.js",
+		"/C/Source/node/trip/tests/test_deferWorkTracked.js",
+		"/C/Source/node/trip/app/locking",
+		"/C/Source/node/trip/app/trip-schemas.js",
+		"/C/Source/node/trip/app/arrayExt.js",
+		"/C/Source/ruby/test2.rb",
+		"/C/Source/ruby/test3.rb",
+		"/C/Source/ruby/test4.rb",
+		"/C/Users/kym/Downloads/Enzyme-Binding-Preferences_testcases/output000.txt",
+		"/C/Users/kym/Downloads/Enzyme-Binding-Preferences_testcases/input000.txt",
+		"/C/Source/node/trip/app/review.js",
+		"/C/Source/node/trip/app/promisify_test.js",
+		"/C/Source/node/trip/app/trip-document-manager.js",
 		"/C/Source/node/trip/app/clear-db.js",
 		"/C/Source/node/trip/app/checkProgress.js",
 		"/C/Source/node/trip/app/repository.js",
 		"/C/Source/node/trip/app/progress-reporter.js",
-		"/C/Source/node/trip/tests/test_cacheRegistry.js",
 		"/C/Source/node/trip/app/trip-schemas-in-memory.js",
 		"/C/Source/node/trip/app/progressRegistryOrig.js",
 		"/C/Source/node/trip/node_modules/memory-cache/index.js",
-		"/C/Source/node/trip/tests/test_review-get.js",
 		"/C/Source/node/trip/tests/test_trip-registry.js",
 		"/C/Source/node/testRunner/testRunner.js",
-		"/C/Source/node/trip/tests/test_deferWorkTracked.js",
 		"/C/Source/node/trip/performance/memory_registry.js",
 		"/C/Source/node/trip/app/tripRegistry.js",
-		"/C/Source/node/trip/app/logging.js",
 		"/C/Users/kym/AppData/Roaming/Sublime Text 3/Packages/User/Refactor.sublime-settings",
 		"/C/Users/kym/AppData/Roaming/Sublime Text 3/Packages/sublime-text-refactor/Refactor.sublime-settings",
 		"/C/Users/kym/AppData/Roaming/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
@@ -716,15 +563,7 @@
 		"/C/Source/DevOps/DatabaseQueries/insertEvent.sh",
 		"/C/Source/FastTrack-Production-Deploy/DevOps/backup/renamedb.sql",
 		"/C/Source/FastTrack-Production-Deploy/DevOps/backup/dropDb.sql",
-		"/C/Source/GRMS/FastTrackAcceptance/tools/configureFTSettings.msbuild",
-		"/C/Source/GRMS/FastTrackAcceptance/tools/deleteIndex.ps1",
-		"/C/Source/GRMS/tools/stopemulator.sh",
-		"/C/Source/DevOps/DeployCloudInstance/deploy.ps1",
-		"/C/Source/NDR/tools/clearNDRData.ps1",
-		"/C/Source/GRMS/tools/emulatordeploy.sh",
-		"/C/Source/NDR/tools/runNdr.sh",
-		"/C/Source/GRMS/tools/localtest.sh",
-		"/C/Source/NDR/NDR.Azure/ServiceDefinition.csdef"
+		"/C/Source/GRMS/FastTrackAcceptance/tools/configureFTSettings.msbuild"
 	],
 	"find":
 	{
@@ -736,6 +575,8 @@
 		"where_history":
 		[
 			"C:\\Source\\node\\trip\\app",
+			"C:\\Source\\node\\trip\\",
+			"C:\\Source\\node\\trip\\app",
 			"",
 			"C:\\Source\\node\\trip",
 			""
@@ -746,6 +587,63 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"misses",
+			"hits",
+			"this",
+			"self",
+			"misses",
+			"hits",
+			"trackedDefer",
+			"lock",
+			"getLock",
+			"add",
+			"cacheRegistry.add",
+			"cache.add",
+			"addItemIfNot",
+			"})\n",
+			"cache",
+			"savedReview",
+			"review",
+			"addReviews",
+			"setRev",
+			"setReviewDet",
+			"setReviewD",
+			"cacheDropTime",
+			"\\$",
+			"$",
+			"loadHotel",
+			"isFini",
+			"isFIni",
+			"workerQueue",
+			"workerQ",
+			"processChildHotel",
+			"load",
+			"loadResponseClosure",
+			"review id",
+			"cl",
+			"console.log",
+			"ParentProgr",
+			"markAsComplete",
+			"ExpectedReviews",
+			"NumberOfExpectedChildren",
+			"NumberOfExpectedRevi",
+			"debugger",
+			"console.log",
+			"rv don",
+			"markAsComp",
+			"getReviewDe",
+			"getReviewDet",
+			"setReviewDe",
+			"workerQueue",
+			"workerQueur",
+			"Hotel_Review",
+			"getHotel",
+			"Hotel",
+			"hotel",
+			"getHotel",
+			"hotelRegistry",
+			"getHotelByLocationId",
+			"createHotel",
 			"puts",
 			"createHotel",
 			"debugger",
@@ -816,64 +714,7 @@
 			"	\n",
 			"isModi",
 			"isModified",
-			"removeIt",
-			"waitOn",
-			";\n",
-			"CacheRegistry",
-			"cacheR",
-			"debug",
-			"debugger",
-			"http",
-			"unresolved",
-			"removeTest",
-			"processChildHotel",
-			"processHotel",
-			"debugger",
-			"debuger",
-			"debugger",
-			"createH",
-			"createHt",
-			"debugger",
-			"getHotel",
-			"addReviews",
-			"hotelRegistry.loadHotel",
-			"debugger",
-			"loadHotel",
-			"LocationId",
-			"getReviewDetails",
-			"hotelRegistry",
-			"exports.logger",
-			"placeWork",
-			"workerQ",
-			"workerQu",
-			"workerQU",
-			"workerQ",
-			"workerQU",
-			"loadPlace",
-			"endPageLo",
-			"Item modif",
-			"No modif",
-			"no modif",
-			"TripRegistry",
-			"deferred",
-			"resolutionH",
-			"processChild",
-			"setProgressRegistry",
-			"request",
-			"loading2",
-			"find by id",
-			"we made",
-			"removing from c",
-			"removing",
-			"Modified",
-			"isModif",
-			"setModified",
-			"isComplete",
-			"markAsCompleteOnChi",
-			"isComplete",
-			"newProgr",
-			"debugger",
-			"newId"
+			"removeIt"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -913,988 +754,8 @@
 	"groups":
 	[
 		{
-			"selected": 5,
 			"sheets":
 			[
-				{
-					"buffer": 0,
-					"file": "app/hotelRegistry.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 3181,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1525,
-								1525
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 820.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 67,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								67,
-								67
-							]
-						],
-						"settings":
-						{
-							"auto_name": "sumOfInput = gets.split(',').map(&:to_i).inject(:+",
-							"syntax": "Packages/Text/Plain text.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "/C/Source/ruby/test2.rb",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 451,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								451
-							]
-						],
-						"settings":
-						{
-							"auto_name": "gets.split(', ')",
-							"syntax": "Packages/Ruby/Ruby.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 129,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								71,
-								71
-							]
-						],
-						"settings":
-						{
-							"auto_name": "8, 4",
-							"syntax": "Packages/Text/Plain text.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "/C/Source/ruby/test3.rb",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2041,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								455,
-								455
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Ruby/Ruby.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 514.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 5,
-					"file": "/C/Source/ruby/test4.rb",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2483,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2305,
-								2305
-							]
-						],
-						"settings":
-						{
-							"auto_name": "",
-							"syntax": "Packages/Ruby/Ruby.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 764.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 6,
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 93,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								54,
-								66
-							]
-						],
-						"settings":
-						{
-							"auto_name": "rslslssrr 		- TAGATC",
-							"syntax": "Packages/Text/Plain text.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 7,
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 750,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								750,
-								750
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Ruby/Ruby.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 8,
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2754,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2754,
-								2754
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Ruby/Ruby.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 785.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 9,
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2111,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1154,
-								1262
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Ruby/Ruby.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 457.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 10,
-					"file": "app/pageLoader.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1208,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								312,
-								312
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 11,
-					"file": "app/progressRegistry.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 5143,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								3166,
-								3166
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 12,
-					"file": "app/review-get.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1343,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								834,
-								848
-							]
-						],
-						"settings":
-						{
-							"nodePath": "node",
-							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 13,
-					"file": "app/place.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 7644,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								4836,
-								4852
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 3481.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 14,
-					"file": "app/cacheRegistry.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2596,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2257,
-								2257
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 349.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 15,
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 14346,
-						"regions":
-						{
-							"match":
-							{
-								"flags": 112,
-								"regions":
-								[
-									[
-										155,
-										163
-									],
-									[
-										332,
-										340
-									],
-									[
-										714,
-										722
-									],
-									[
-										1030,
-										1039
-									],
-									[
-										1058,
-										1067
-									],
-									[
-										1240,
-										1249
-									],
-									[
-										1440,
-										1449
-									],
-									[
-										1458,
-										1467
-									],
-									[
-										1557,
-										1566
-									],
-									[
-										1672,
-										1681
-									],
-									[
-										1951,
-										1955
-									],
-									[
-										2127,
-										2131
-									],
-									[
-										2308,
-										2312
-									],
-									[
-										2494,
-										2498
-									],
-									[
-										2548,
-										2552
-									],
-									[
-										2656,
-										2660
-									],
-									[
-										2825,
-										2829
-									],
-									[
-										2930,
-										2934
-									],
-									[
-										3055,
-										3059
-									],
-									[
-										3164,
-										3168
-									],
-									[
-										3319,
-										3323
-									],
-									[
-										3543,
-										3547
-									],
-									[
-										3720,
-										3724
-									],
-									[
-										3926,
-										3930
-									],
-									[
-										4180,
-										4184
-									],
-									[
-										4237,
-										4241
-									],
-									[
-										4424,
-										4428
-									],
-									[
-										4511,
-										4515
-									],
-									[
-										4526,
-										4530
-									],
-									[
-										4645,
-										4649
-									],
-									[
-										4781,
-										4785
-									],
-									[
-										4931,
-										4935
-									],
-									[
-										5146,
-										5150
-									],
-									[
-										5202,
-										5206
-									],
-									[
-										5272,
-										5276
-									],
-									[
-										5471,
-										5475
-									],
-									[
-										5530,
-										5534
-									],
-									[
-										5617,
-										5621
-									],
-									[
-										5737,
-										5741
-									],
-									[
-										5770,
-										5774
-									],
-									[
-										5777,
-										5781
-									],
-									[
-										5996,
-										6000
-									],
-									[
-										6116,
-										6120
-									],
-									[
-										6203,
-										6207
-									],
-									[
-										6212,
-										6216
-									],
-									[
-										6272,
-										6276
-									],
-									[
-										6288,
-										6292
-									],
-									[
-										6453,
-										6457
-									],
-									[
-										6602,
-										6606
-									],
-									[
-										6804,
-										6808
-									],
-									[
-										7029,
-										7033
-									],
-									[
-										7203,
-										7207
-									],
-									[
-										7431,
-										7435
-									],
-									[
-										7568,
-										7572
-									],
-									[
-										7606,
-										7610
-									],
-									[
-										7721,
-										7725
-									],
-									[
-										7925,
-										7929
-									],
-									[
-										8136,
-										8140
-									],
-									[
-										8222,
-										8226
-									],
-									[
-										8407,
-										8411
-									],
-									[
-										8577,
-										8581
-									],
-									[
-										8604,
-										8608
-									],
-									[
-										8692,
-										8696
-									],
-									[
-										8803,
-										8807
-									],
-									[
-										8943,
-										8947
-									],
-									[
-										8970,
-										8974
-									],
-									[
-										9198,
-										9202
-									],
-									[
-										9391,
-										9395
-									],
-									[
-										9569,
-										9573
-									],
-									[
-										9728,
-										9732
-									],
-									[
-										9950,
-										9954
-									],
-									[
-										10121,
-										10125
-									],
-									[
-										10294,
-										10298
-									],
-									[
-										10350,
-										10354
-									],
-									[
-										10485,
-										10489
-									],
-									[
-										10560,
-										10564
-									],
-									[
-										10752,
-										10764
-									],
-									[
-										11012,
-										11024
-									],
-									[
-										11389,
-										11392
-									],
-									[
-										11666,
-										11669
-									],
-									[
-										11943,
-										11946
-									],
-									[
-										11985,
-										11988
-									],
-									[
-										12025,
-										12028
-									],
-									[
-										12080,
-										12083
-									],
-									[
-										12201,
-										12204
-									],
-									[
-										12434,
-										12437
-									],
-									[
-										12683,
-										12686
-									],
-									[
-										12821,
-										12824
-									],
-									[
-										12943,
-										12946
-									],
-									[
-										12986,
-										12989
-									],
-									[
-										13036,
-										13039
-									],
-									[
-										13189,
-										13192
-									],
-									[
-										13403,
-										13417
-									],
-									[
-										13788,
-										13796
-									],
-									[
-										13961,
-										13969
-									],
-									[
-										14170,
-										14178
-									]
-								],
-								"scope": ""
-							}
-						},
-						"selection":
-						[
-							[
-								13967,
-								13967
-							]
-						],
-						"settings":
-						{
-							"detect_indentation": false,
-							"line_numbers": false,
-							"output_tag": 8,
-							"result_base_dir": "",
-							"result_file_regex": "^([A-Za-z\\\\/<].*):$",
-							"result_line_regex": "^ +([0-9]+):",
-							"scroll_past_end": true,
-							"syntax": "Packages/Default/Find Results.hidden-tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 8244.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 16,
-					"file": "app/cachePolicy.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1136,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								936,
-								936
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 275.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 17,
-					"file": "app/scrape.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 4920,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								3442,
-								3449
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 2442.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 18,
-					"file": "app/cache.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2702,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								872,
-								872
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 495.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 19,
-					"file": "tests/test_cacheRegistry.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 4140,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 3341.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 20,
-					"file": "app/arrayExt.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 490,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								398,
-								398
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				}
 			]
 		}
 	],
@@ -1932,7 +793,7 @@
 	"project": "trip.sublime-project",
 	"replace":
 	{
-		"height": 62.0
+		"height": 48.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -1940,6 +801,78 @@
 		"height": 0.0,
 		"selected_items":
 		[
+			[
+				"cache",
+				"app\\cache.js"
+			],
+			[
+				"test_c",
+				"tests\\test_cache.js"
+			],
+			[
+				"creg",
+				"app\\cacheRegistry.js"
+			],
+			[
+				"test_car",
+				"tests\\test_cacheRegistry.js"
+			],
+			[
+				"test_review",
+				"tests\\test_review-get.js"
+			],
+			[
+				"test_def",
+				"tests\\test_deferWorkTracked.js"
+			],
+			[
+				"deferwo",
+				"app\\deferWork.js"
+			],
+			[
+				"test_deferwt",
+				"tests\\test_deferWorkTracked.js"
+			],
+			[
+				"lock",
+				"app\\locking.js"
+			],
+			[
+				"scra",
+				"app\\scrape.js"
+			],
+			[
+				"progr",
+				"app\\progressRegistry.js"
+			],
+			[
+				"hotelr",
+				"app\\hotelRegistry.js"
+			],
+			[
+				"sce",
+				"app\\trip-schemas.js"
+			],
+			[
+				"sche",
+				"app\\trip-schemas.js"
+			],
+			[
+				"schema",
+				"app\\trip-schemas.js"
+			],
+			[
+				"schem",
+				"app\\trip-schemas.js"
+			],
+			[
+				"pr",
+				"app\\progressRegistry.js"
+			],
+			[
+				"cacre",
+				"app\\cacheRegistry.js"
+			],
 			[
 				"arraye",
 				"app\\arrayExt.js"
@@ -1949,16 +882,8 @@
 				"tests\\test_cacheRegistry.js"
 			],
 			[
-				"test_c",
-				"tests\\test_cache.js"
-			],
-			[
 				"revi",
 				"app\\review-get.js"
-			],
-			[
-				"cache",
-				"app\\cache.js"
 			],
 			[
 				"scrap",
@@ -1989,16 +914,8 @@
 				"app\\arrayExt.js"
 			],
 			[
-				"schema",
-				"app\\trip-schemas.js"
-			],
-			[
 				"hreg",
 				"app\\hotelRegistry.js"
-			],
-			[
-				"scra",
-				"app\\scrape.js"
 			],
 			[
 				"revg",
@@ -2051,10 +968,6 @@
 			[
 				"pl",
 				"app\\place.js"
-			],
-			[
-				"pr",
-				"app\\progressRegistry.js"
 			],
 			[
 				"preg",
@@ -2130,10 +1043,6 @@
 			],
 			[
 				"sch",
-				"app\\trip-schemas-in-memory.js"
-			],
-			[
-				"sche",
 				"app\\trip-schemas-in-memory.js"
 			],
 			[

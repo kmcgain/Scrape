@@ -22,12 +22,12 @@ var async = require('async');
 
 
 
-try {
-	var heapdump = require('heapdump');
-}
-catch (e) {
-	console.log("Couldn't import heapdump: " + e);
-}
+//try {
+//	var heapdump = require('heapdump');
+//}
+//catch (e) {
+//	console.log("Couldn't import heapdump: " + e);
+//}
 // var nodetime = require('nodetime');
 // nodetime.profile({
 //     accountKey: 'd1299ed3f939d927ff5c62e7b11e22f59eb46b4a', 
@@ -107,19 +107,26 @@ var workerQueue = async.queue(function asyncQueueWorker(task, callback) {
 		return;
 	}
 
-	var def = deferred();
-	callback(null, task, def);
+	console.log('starting processing');
 
+	var def = deferred();
+
+	if (task.workerFunc) {
+		task.workerFunc(null, task.data, def);
+	}
+	
 	def.promise
 	.then(function() {
-		totalWorkItemsProcessed++;		
+		totalWorkItemsProcessed++;	
+		console.log('finished processing');
+		callback();	
 	})
 	.done();
-}, 100);
+}, 1);
 place.workerQueue = workerQueue;
 
 var progressRegistry = null;
-
+var hotelRegistry = null;
 
 //require('./trip-schemas-in-memory').Entities()
 require('./trip-schemas').Entities()
@@ -128,7 +135,7 @@ require('./trip-schemas').Entities()
 
 	
 	progressRegistry = require('./progressRegistry')(tripEntities.TripMongo);
-	var hotelRegistry = require('./hotelRegistry')(tripEntities.HotelMongo, progressRegistry);
+	hotelRegistry = require('./hotelRegistry')(tripEntities.HotelMongo, progressRegistry);
 	place.setProgressRegistry(progressRegistry);
 	place.setHotelRegistry(hotelRegistry);
 
@@ -145,10 +152,11 @@ function getUrl(relHref) {
 function appStart(tripEntities, progressRegistry) {
 	console.log("Loading places");
 	//var allLocationsUrl = getUrl('/AllLocations-g1-Places-World.html');
-	var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
+	//var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
 	//var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
 	//var allLocationsUrl = getUrl('/Hotel_Review-g2708206-d1086922-Reviews-Allansford_Hotel_Motel-Allansford_Victoria.html');
 
+	var allLocationsUrl = getUrl('/Tourism-g261659-Lorne_Victoria-Vacations.html');
 	//var allLocationsUrl = getUrl('http://www.tripadvisor.com.au/Tourism-g552127-Aireys_Inlet_Victoria-Vacations.html');
 
 	logger.verbose('starting');
@@ -164,7 +172,7 @@ var checkCount = 1;
 function checkForCompletion(entities, rootId, progressRegistry) {
 	progressRegistry.isComplete(rootId, {noCache: true})
 	.then(function completionCheck(isComplete) {
-		return isComplete && progressRegistry.isFinishedWriting();
+		return isComplete && progressRegistry.isFinishedWriting() && hotelRegistry.isFinishedWriting();
 	})
 	.done(function allWorkDone(isAllWorkDone) {
 		logger.verbose('number of items in cache: ' + progressRegistry.cacheSize());

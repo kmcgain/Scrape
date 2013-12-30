@@ -12,7 +12,7 @@ module.exports.persistencePolicy = function() {
 	return {name: "persistence", func: function(value, prev, next) {
 		if (value.item.hasPendingChanges)
 		{
-			value.item.save(function(){/*handle error*/next(value)});
+			value.item.save(function(){/*TODO: handle error*/next(value)});
 		}
 		else {
 			next(value);

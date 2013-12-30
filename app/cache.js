@@ -61,7 +61,7 @@ Cache.prototype = {
 				for (var sig in signature) {
 					if (signature.hasOwnProperty(sig)) {
 						var sigVal = signature[sig];
-						debugger;
+
 						if (value[sig] == sigVal) {
 							anyMatch = true;					
 						}
