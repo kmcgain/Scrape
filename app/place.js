@@ -62,6 +62,10 @@ function continueLoading(href, progressId) {
 	return def.promise;
 }
 
+function deRef(str) {
+	return (str + ' ').substring(0, str.length);
+}
+
 function handleResponse(body, href, progressId) {
 	//exports.loadTracker.endPageLoad(href);
 
@@ -76,12 +80,12 @@ function handleResponse(body, href, progressId) {
 
 		var allReviewIds = [];
 		$('#REVIEWS .reviewSelector').each(function() {
-			allReviewIds.push(this.attr('id'));
+			allReviewIds.push(deRef(this.attr('id')));
 		});
 		var hotelInfo = {
 			allReviewIds: allReviewIds,
-			hotelTitle: $('#HEADING').text().trim(),
-			pageCount: $('.pagination .pgCount').text(),
+			hotelTitle: deRef($('#HEADING').text().trim()),
+			pageCount: deRef($('.pagination .pgCount').text()),
 		};
 
 		return processChildHotel(progressId, href, hotelInfo);
@@ -111,7 +115,7 @@ function handleResponse(body, href, progressId) {
 		console.log('Specifal Url: ' + href);
 	}
 
-	var childHrefs = selecter.map(function hrefMapper() {return $(this).attr('href');});
+	var childHrefs = selecter.map(function hrefMapper() {return deRef($(this).attr('href'));});
 
 	progressRegistry.setNumberOfExpectedChildren(childHrefs.length, progressId);		
 
