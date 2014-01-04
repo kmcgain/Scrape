@@ -67,8 +67,6 @@ function deRef(str) {
 }
 
 function handleResponse(body, href, progressId) {
-	//exports.loadTracker.endPageLoad(href);
-
 	$ = cheerio.load(body);
 
 	var selecter = null;
@@ -77,6 +75,7 @@ function handleResponse(body, href, progressId) {
 	if (href.match(/\/Hotel_Review/)) {
 		// TODO: make this align with the other cases so we can refactor.	
 		console.log('processing child ' + href);
+		return deferred(0);
 
 		var allReviewIds = [];
 		$('#REVIEWS .reviewSelector').each(function() {

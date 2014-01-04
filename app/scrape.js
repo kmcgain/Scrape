@@ -4,6 +4,7 @@ var deferWork = require('./deferWork');
 var meld = require('meld');
 var deferred = deferWork.deferred;
 
+var levelOfConcurrency = 2;
 var totalTimeDeferred = 0;
 // meld.around(deferWork, 'deferred', function(methodCall) {
 // 	var time = process.hrtime();
@@ -122,7 +123,7 @@ var workerQueue = async.queue(function asyncQueueWorker(task, callback) {
 		callback();	
 	})
 	.done();
-}, 1);
+}, levelOfConcurrency);
 place.workerQueue = workerQueue;
 
 var progressRegistry = null;
@@ -152,11 +153,11 @@ function getUrl(relHref) {
 function appStart(tripEntities, progressRegistry) {
 	console.log("Loading places");
 	//var allLocationsUrl = getUrl('/AllLocations-g1-Places-World.html');
-	//var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
+	var allLocationsUrl = getUrl('/AllLocations-g255098-Places-Victoria.html');
 	//var allLocationsUrl = getUrl('/Tourism-g2708206-Allansford_Victoria-Vacations.html');
 	//var allLocationsUrl = getUrl('/Hotel_Review-g2708206-d1086922-Reviews-Allansford_Hotel_Motel-Allansford_Victoria.html');
 
-	var allLocationsUrl = getUrl('/Tourism-g261659-Lorne_Victoria-Vacations.html');
+	//var allLocationsUrl = getUrl('/Tourism-g261659-Lorne_Victoria-Vacations.html');
 	//var allLocationsUrl = getUrl('http://www.tripadvisor.com.au/Tourism-g552127-Aireys_Inlet_Victoria-Vacations.html');
 
 	logger.verbose('starting');
