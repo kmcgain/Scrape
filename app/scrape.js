@@ -31,12 +31,12 @@ setInterval(function () {
 }, 60000);
 
 
-//try {
-//	var heapdump = require('heapdump');
-//}
-//catch (e) {
-//	console.log("Couldn't import heapdump: " + e);
-//}
+try {
+	var heapdump = require('heapdump');
+}
+catch (e) {
+	console.log("Couldn't import heapdump: " + e);
+}
 // var nodetime = require('nodetime');
 // nodetime.profile({
 //     accountKey: 'd1299ed3f939d927ff5c62e7b11e22f59eb46b4a', 
