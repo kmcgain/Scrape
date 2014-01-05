@@ -20,7 +20,15 @@ var trip = require('./Trip');
 var place = require('./place');
 require('./arrayExt');
 var async = require('async');
+var util = require('util');
 
+
+setInterval(function () {
+    if (typeof gc === 'function') {
+        gc();
+    }
+    console.log('Memory Usage' + util.inspect(process.memoryUsage()));
+}, 60000);
 
 
 //try {
