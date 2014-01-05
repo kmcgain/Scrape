@@ -116,8 +116,6 @@ var workerQueue = async.queue(function asyncQueueWorker(task, callback) {
 		return;
 	}
 
-	console.log('starting processing');
-
 	var def = deferred();
 
 	if (task.workerFunc) {
@@ -127,7 +125,6 @@ var workerQueue = async.queue(function asyncQueueWorker(task, callback) {
 	def.promise
 	.then(function() {
 		totalWorkItemsProcessed++;	
-		console.log('finished processing');
 		callback();	
 	})
 	.done();
